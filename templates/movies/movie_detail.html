@@ -14,176 +14,211 @@
     </nav>
     
     <div class="row">
-        <!-- Movie Info -->
+        <!-- Movie Poster & Quick Info -->
         <div class="col-md-4 mb-4">
             <div class="card">
-                <div class="card-img-top movie-poster bg-secondary d-flex align-items-center justify-content-center" style="height: 350px;">
+                <div class="card-img-top movie-poster bg-secondary d-flex align-items-center justify-content-center" style="height: 450px;">
                     {% if movie.poster_path %}
-                    <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="img-fluid" style="max-height: 350px; object-fit: cover;">
+                    <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="img-fluid" style="max-height: 450px; width: 100%; object-fit: cover;">
                     {% elif imdb_data and imdb_data.poster and imdb_data.poster != 'N/A' %}
-                    <img src="{{ imdb_data.poster }}" alt="{{ movie.title }}" class="img-fluid" style="max-height: 350px; object-fit: cover;">
+                    <img src="{{ imdb_data.poster }}" alt="{{ movie.title }}" class="img-fluid" style="max-height: 450px; width: 100%; object-fit: cover;">
                     {% else %}
                     <i class="bi bi-film display-1"></i>
                     {% endif %}
                 </div>
                 <div class="card-body">
+                    <!-- Ratings Overview -->
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <span class="badge bg-primary fs-5">
-                            ★ {{ movie.average_rating|floatformat:1 }}
-                        </span>
-                        <span class="text-muted">{{ movie.rating_count }} ratings</span>
+                        <div>
+                            {% if movie.imdb_rating %}
+                            <span class="badge bg-warning text-dark fs-5 me-1">
+                                <i class="bi bi-star-fill"></i> {{ movie.imdb_rating }}
+                            </span>
+                            <small class="text-muted">IMDb</small>
+                            {% else %}
+                            <span class="badge bg-primary fs-5">
+                                ★ {{ movie.average_rating|floatformat:1 }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <span class="text-muted">{{ movie.rating_count }} user ratings</span>
                     </div>
                     
+                    <!-- Quick Stats -->
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Year</span>
+                            <span><i class="bi bi-calendar3 me-2"></i>Year</span>
                             <strong>{{ movie.year }}</strong>
                         </li>
                         {% if movie.runtime %}
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Runtime</span>
+                            <span><i class="bi bi-clock me-2"></i>Runtime</span>
                             <strong>{{ movie.get_display_runtime }}</strong>
                         </li>
-                        {% elif imdb_data and imdb_data.runtime and imdb_data.runtime != 'N/A' %}
+                        {% endif %}
+                        {% if movie.rated %}
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Runtime</span>
-                            <strong>{{ imdb_data.runtime }}</strong>
+                            <span><i class="bi bi-person-badge me-2"></i>Rated</span>
+                            <strong>{{ movie.rated }}</strong>
                         </li>
                         {% endif %}
-                        {% if imdb_data and imdb_data.rated and imdb_data.rated != 'N/A' %}
+                        {% if movie.language %}
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Rated</span>
-                            <strong>{{ imdb_data.rated }}</strong>
+                            <span><i class="bi bi-translate me-2"></i>Language</span>
+                            <strong>{{ movie.language|truncatechars:20 }}</strong>
                         </li>
                         {% endif %}
+                        {% if movie.country %}
                         <li class="list-group-item d-flex justify-content-between">
-                            <span>Popularity</span>
-                            <strong>{{ movie.popularity|floatformat:1 }}</strong>
+                            <span><i class="bi bi-globe me-2"></i>Country</span>
+                            <strong>{{ movie.country|truncatechars:20 }}</strong>
                         </li>
+                        {% endif %}
                     </ul>
+                    
+                    <!-- External Links -->
+                    <div class="mt-3 d-grid gap-2">
+                        {% if movie.imdb_id %}
+                        <a href="https://www.imdb.com/title/{{ movie.imdb_id }}/" target="_blank" class="btn btn-outline-warning btn-sm">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>View on IMDb
+                        </a>
+                        {% endif %}
+                        <a href="https://letterboxd.com/search/{{ movie.title|urlencode }}/" target="_blank" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Find on Letterboxd
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
         
         <!-- Movie Details -->
         <div class="col-md-8">
-            <h1 class="mb-3">{{ movie.title }} <small class="text-muted">({{ movie.year }})</small></h1>
+            <h1 class="mb-2">{{ movie.title }} <small class="text-muted">({{ movie.year }})</small></h1>
+            
+            <!-- Meta info line -->
+            <p class="text-muted mb-3">
+                {% if movie.rated %}{{ movie.rated }} • {% endif %}
+                {% if movie.runtime %}{{ movie.get_display_runtime }} • {% endif %}
+                {% if movie.released %}{{ movie.released }}{% endif %}
+            </p>
             
             <!-- Genres -->
-            <div class="mb-3">
+            <div class="mb-4">
                 {% for genre in movie.get_genres_list %}
-                <a href="{% url 'genre_movies' genre %}" class="btn btn-sm btn-outline-primary">
+                <a href="{% url 'genre_movies' genre %}" class="btn btn-sm btn-outline-primary me-1 mb-1">
                     {{ genre }}
                 </a>
                 {% endfor %}
             </div>
             
-            <!-- Overview -->
+            <!-- All Ratings Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart-fill me-2"></i>Ratings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% if movie.imdb_rating %}
+                        <div class="col-md-3 col-6 text-center">
+                            <div class="p-3 rounded" style="background-color: var(--bg-secondary);">
+                                <div class="fs-3 fw-bold text-warning">{{ movie.imdb_rating }}</div>
+                                <div class="small text-muted">IMDb Rating</div>
+                                {% if movie.imdb_votes %}
+                                <div class="small text-muted">{{ movie.imdb_votes }} votes</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if movie.metascore %}
+                        <div class="col-md-3 col-6 text-center">
+                            <div class="p-3 rounded" style="background-color: var(--bg-secondary);">
+                                <div class="fs-3 fw-bold {% if movie.metascore >= 60 %}text-success{% elif movie.metascore >= 40 %}text-warning{% else %}text-danger{% endif %}">{{ movie.metascore }}</div>
+                                <div class="small text-muted">Metascore</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if movie.rotten_tomatoes %}
+                        <div class="col-md-3 col-6 text-center">
+                            <div class="p-3 rounded" style="background-color: var(--bg-secondary);">
+                                <div class="fs-3 fw-bold text-danger">{{ movie.rotten_tomatoes }}</div>
+                                <div class="small text-muted">Rotten Tomatoes</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-3 col-6 text-center">
+                            <div class="p-3 rounded" style="background-color: var(--bg-secondary);">
+                                <div class="fs-3 fw-bold">{{ movie.average_rating|floatformat:1 }}</div>
+                                <div class="small text-muted">CineSense</div>
+                                <div class="small text-muted">{{ movie.rating_count }} ratings</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Plot/Overview -->
             {% if movie.overview %}
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Overview</h5>
+                    <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Plot</h5>
                 </div>
                 <div class="card-body">
-                    <p class="card-text">{{ movie.overview }}</p>
-                </div>
-            </div>
-            {% elif imdb_data and imdb_data.plot %}
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Overview</h5>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">{{ imdb_data.plot }}</p>
+                    <p class="card-text lead">{{ movie.overview }}</p>
                 </div>
             </div>
             {% endif %}
             
-            <!-- External Ratings & Links -->
+            <!-- Cast & Crew -->
+            {% if movie.director or movie.actors or movie.writer %}
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-globe me-2"></i>External Ratings & Links</h5>
+                    <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Cast & Crew</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row g-3">
-                        <!-- IMDB Section -->
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center mb-3">
-                                <i class="bi bi-film text-warning me-2" style="font-size: 1.5rem;"></i>
-                                <h6 class="mb-0">IMDb</h6>
-                            </div>
-                            {% if imdb_data %}
-                            <div class="mb-2">
-                                <span class="badge bg-warning text-dark fs-6">
-                                    <i class="bi bi-star-fill me-1"></i>{{ imdb_data.imdb_rating }}/10
-                                </span>
-                                <small class="text-muted ms-2">({{ imdb_data.imdb_votes }} votes)</small>
-                            </div>
-                            {% if imdb_data.director and imdb_data.director != 'N/A' %}
-                            <p class="mb-1"><strong>Director:</strong> {{ imdb_data.director }}</p>
-                            {% endif %}
-                            {% if imdb_data.actors and imdb_data.actors != 'N/A' %}
-                            <p class="mb-1"><strong>Cast:</strong> {{ imdb_data.actors }}</p>
-                            {% endif %}
-                            {% if imdb_data.awards and imdb_data.awards != 'N/A' %}
-                            <p class="mb-1"><i class="bi bi-trophy text-warning me-1"></i>{{ imdb_data.awards }}</p>
-                            {% endif %}
-                            {% if imdb_data.box_office and imdb_data.box_office != 'N/A' %}
-                            <p class="mb-2"><strong>Box Office:</strong> {{ imdb_data.box_office }}</p>
-                            {% endif %}
-                            <a href="{{ imdb_data.imdb_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-warning">
-                                <i class="bi bi-box-arrow-up-right me-1"></i>View on IMDb
-                            </a>
-                            {% else %}
-                            <p class="text-muted mb-2">IMDb data not available</p>
-                            <a href="https://www.imdb.com/find?q={{ movie.title|urlencode }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-search me-1"></i>Search on IMDb
-                            </a>
-                            {% endif %}
-                        </div>
-                        
-                        <!-- Letterboxd Section -->
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center mb-3">
-                                <i class="bi bi-camera-reels text-success me-2" style="font-size: 1.5rem;"></i>
-                                <h6 class="mb-0">Letterboxd</h6>
-                            </div>
-                            {% if letterboxd_data %}
-                            {% if letterboxd_data.average_rating %}
-                            <div class="mb-2">
-                                <span class="badge bg-success fs-6">
-                                    <i class="bi bi-star-fill me-1"></i>{{ letterboxd_data.display_rating }}
-                                </span>
-                            </div>
-                            {% endif %}
-                            <p class="text-muted mb-2">Track, rate & review on Letterboxd</p>
-                            <a href="{{ letterboxd_data.letterboxd_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success">
-                                <i class="bi bi-box-arrow-up-right me-1"></i>View on Letterboxd
-                            </a>
-                            {% else %}
-                            <p class="text-muted mb-2">Find this movie on Letterboxd</p>
-                            <a href="https://letterboxd.com/search/{{ movie.title|urlencode }}/" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-search me-1"></i>Search on Letterboxd
-                            </a>
-                            {% endif %}
-                        </div>
+                    {% if movie.director %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2"><i class="bi bi-megaphone me-1"></i>Director</h6>
+                        <p class="mb-0">{{ movie.director }}</p>
                     </div>
-                    
-                    <!-- Additional Ratings from IMDB -->
-                    {% if imdb_data.ratings %}
-                    <hr class="my-3">
-                    <h6 class="mb-3"><i class="bi bi-bar-chart me-2"></i>Critic Scores</h6>
-                    <div class="d-flex flex-wrap gap-3">
-                        {% for rating in imdb_data.ratings %}
-                        <div class="text-center">
-                            <div class="badge bg-secondary fs-6 mb-1">{{ rating.Value }}</div>
-                            <div class="small text-muted">{{ rating.Source }}</div>
-                        </div>
-                        {% endfor %}
+                    {% endif %}
+                    {% if movie.writer %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2"><i class="bi bi-pen me-1"></i>Writers</h6>
+                        <p class="mb-0">{{ movie.writer }}</p>
+                    </div>
+                    {% endif %}
+                    {% if movie.actors %}
+                    <div class="mb-0">
+                        <h6 class="text-muted mb-2"><i class="bi bi-person-video2 me-1"></i>Cast</h6>
+                        <p class="mb-0">{{ movie.actors }}</p>
                     </div>
                     {% endif %}
                 </div>
             </div>
+            {% endif %}
+            
+            <!-- Awards & Box Office -->
+            {% if movie.awards or movie.box_office %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-trophy-fill me-2"></i>Awards & Box Office</h5>
+                </div>
+                <div class="card-body">
+                    {% if movie.awards %}
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2"><i class="bi bi-award me-1"></i>Awards</h6>
+                        <p class="mb-0">{{ movie.awards }}</p>
+                    </div>
+                    {% endif %}
+                    {% if movie.box_office %}
+                    <div class="mb-0">
+                        <h6 class="text-muted mb-2"><i class="bi bi-cash-stack me-1"></i>Box Office</h6>
+                        <p class="mb-0 fs-4 fw-bold text-success">{{ movie.box_office }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
             
             <!-- Rating Form -->
             {% if user.is_authenticated %}

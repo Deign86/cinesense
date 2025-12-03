@@ -20,6 +20,23 @@ requests>=2.31.0
 # Environment Variables
 python-dotenv>=1.0.0
 
+# =============================================================================
+# BULK IMPORT DEPENDENCIES (for 1M+ movies)
+# =============================================================================
+
+# Pandas for efficient CSV parsing (Kaggle TMDB dataset)
+pandas>=2.0.0
+
+# Streaming JSON parser - handles 10M+ records with minimal memory
+ijson>=3.2.0
+
+# Progress bar for bulk operations
+tqdm>=4.66.0
+
+# =============================================================================
+# OPTIONAL DEPENDENCIES
+# =============================================================================
+
 # Optional: For production deployment
 gunicorn>=21.0.0
 
@@ -31,3 +48,4 @@ gunicorn>=21.0.0
 # django-debug-toolbar>=4.0.0
 # black>=23.0.0
 # flake8>=6.0.0
+

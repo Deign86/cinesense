@@ -143,6 +143,11 @@ LOGGING = {
     },
 }
 
+# Authentication settings
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+
 # External API Configuration
 # OMDB API - Get a free API key at: http://www.omdbapi.com/apikey.aspx
 OMDB_API_KEY = os.environ.get('OMDB_API_KEY', '')  # Set your API key here or via environment variable

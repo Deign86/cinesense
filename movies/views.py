@@ -16,13 +16,17 @@ Demonstrates:
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from django.views import View
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
 from django.contrib import messages
 from django.db.models import Avg, Count, Q
 from django.core.paginator import Paginator
 from django.conf import settings
+from django.urls import reverse_lazy
 
 from .models import Movie, Rating, UserProfile, WatchEvent, MovieIterator
 from .forms import RatingForm, MovieSearchForm, MovieForm, QuickRatingForm
@@ -317,9 +321,12 @@ def rate_movie(request, pk):
     return redirect('movie_detail', pk=movie.pk)
 
 
-class AnalyticsView(LoginRequiredMixin, View):
+class AnalyticsView(View):
     """
     Analytics dashboard view.
+    
+    Shows personal analytics for logged-in users,
+    global analytics for anonymous users.
     
     Demonstrates: Class-based View, analytics service integration,
                  collections for data aggregation
@@ -331,8 +338,11 @@ class AnalyticsView(LoginRequiredMixin, View):
         
         Demonstrates: Service integration, dict data, f-strings
         """
-        # Initialize analytics service
-        analytics = AnalyticsService(user=request.user)
+        # Check if user is authenticated for personal vs global stats
+        is_authenticated = request.user.is_authenticated
+        
+        # Initialize analytics service (user=None for global stats)
+        analytics = AnalyticsService(user=request.user if is_authenticated else None)
         
         # Get various statistics - returns dicts
         genre_stats = analytics.get_genre_statistics()
@@ -350,9 +360,15 @@ class AnalyticsView(LoginRequiredMixin, View):
             charts['genre_pie'] = chart_gen.create_genre_pie_chart(genre_stats)
         
         # Rating distribution histogram
-        user_ratings = list(
-            Rating.objects.filter(user=request.user).values_list('stars', flat=True)
-        )
+        if is_authenticated:
+            user_ratings = list(
+                Rating.objects.filter(user=request.user).values_list('stars', flat=True)
+            )
+        else:
+            user_ratings = list(
+                Rating.objects.all().values_list('stars', flat=True)
+            )
+        
         if user_ratings:
             charts['rating_hist'] = chart_gen.create_rating_histogram(user_ratings)
         
@@ -362,12 +378,18 @@ class AnalyticsView(LoginRequiredMixin, View):
                 rating_stats['ratings_over_time']
             )
         
+        if is_authenticated:
+            page_title = f"Your Analytics - {request.user.username} - CineSense"
+        else:
+            page_title = "Global Analytics - CineSense"
+        
         context = {
             'genre_stats': genre_stats,
             'rating_stats': rating_stats,
             'watch_patterns': watch_patterns,
             'charts': charts,
-            'page_title': f"Analytics Dashboard - {request.user.username} - CineSense",
+            'is_personal': is_authenticated,
+            'page_title': page_title,
         }
         
         return render(request, 'movies/analytics.html', context)
@@ -642,3 +664,53 @@ def add_movie(request):
     }
     
     return render(request, 'movies/add_movie.html', context)
+
+
+# ==============================================================
+# Authentication Views
+# ==============================================================
+
+class CustomLoginView(LoginView):
+    """
+    Custom login view with styled template.
+    """
+    template_name = 'accounts/login.html'
+    redirect_authenticated_user = True
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Login - CineSense'
+        return context
+    
+    def form_valid(self, form):
+        messages.success(self.request, f"Welcome back, {form.get_user().username}!")
+        return super().form_valid(form)
+
+
+class SignupView(CreateView):
+    """
+    User registration view.
+    """
+    form_class = UserCreationForm
+    template_name = 'accounts/signup.html'
+    success_url = reverse_lazy('home')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['page_title'] = 'Sign Up - CineSense'
+        return context
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Auto-login after signup
+        login(self.request, self.object)
+        # Create user profile
+        from .models import UserProfile
+        UserProfile.objects.get_or_create(user=self.object)
+        messages.success(self.request, f"Welcome to CineSense, {self.object.username}! Start rating movies to get personalized recommendations.")
+        return response
+    
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('home')
+        return super().dispatch(request, *args, **kwargs)

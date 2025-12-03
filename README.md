@@ -268,6 +268,163 @@ cinesense_project/
 
 ---
 
+## 📥 Bulk Movie Import (1M+ Movies)
+
+CineSense supports bulk importing of **1,000,000+ movies** in under 10 minutes.
+
+### 📊 Dataset Options
+
+| Dataset | Format | Size | Features |
+|---------|--------|------|----------|
+| **Kaggle TMDB** (Recommended) | CSV | 696 MB | IMDB ratings, cast, crew, production companies |
+| TMDB Official | JSON.gz | ~500 MB | Basic info only, requires OMDB enrichment |
+
+### Quick Start (Kaggle CSV - Recommended)
+
+```bash
+# Install dependencies
+pip install pandas tqdm
+
+# 1. Download from Kaggle:
+#    https://www.kaggle.com/datasets/alanvourch/tmdb-movies-daily-updates
+#    Download: TMDB_all_movies.csv
+
+# 2. Import movies
+python manage.py import_movies --bulk --file=TMDB_all_movies.csv --limit=500000
+```
+
+### Step-by-Step Instructions
+
+#### Option A: Kaggle CSV Dataset (RECOMMENDED)
+
+This dataset includes **pre-computed IMDB ratings**, cast, crew, and production info!
+
+1. **Download from Kaggle:**
+   - Visit: https://www.kaggle.com/datasets/alanvourch/tmdb-movies-daily-updates
+   - Download: `TMDB_all_movies.csv` (~696 MB)
+   - Save to your project directory
+
+2. **Run the Import:**
+```bash
+# Import all released movies with IMDB ratings
+python manage.py import_movies --bulk --file=TMDB_all_movies.csv
+
+# Import with minimum vote threshold (higher quality)
+python manage.py import_movies --bulk --file=TMDB_all_movies.csv --min-votes=100
+
+# Import including unreleased movies
+python manage.py import_movies --bulk --file=TMDB_all_movies.csv --include-unreleased
+```
+
+#### Option B: TMDB Official JSON Dataset
+
+```bash
+# Auto-download and import
+python manage.py import_movies --bulk --download --limit=500000
+
+# Or download manually:
+# 1. Visit: https://datasets.tmdb.org/p/0.1/movie-list.json.gz
+# 2. Run:
+python manage.py import_movies --bulk --file=movie-list.json.gz
+```
+
+### Import Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--bulk` | - | Use TMDB bulk dataset import |
+| `--file` | `TMDB_all_movies.csv` | Path to dataset (CSV or JSON) |
+| `--limit` | `1,000,000` | Maximum movies to import |
+| `--batch-size` | `1000` | Movies per batch (tune for memory) |
+| `--min-votes` | `0` | Minimum vote count (CSV only) |
+| `--min-popularity` | `0.0` | Minimum TMDB popularity score |
+| `--include-adult` | `false` | Include adult movies (JSON only) |
+| `--include-unreleased` | `false` | Include unreleased movies (CSV only) |
+| `--download` | `false` | Auto-download TMDB JSON dataset |
+
+### Performance
+
+| Movies | Time | Rate |
+|--------|------|------|
+| 100,000 | ~1 min | ~1,700/sec |
+| 500,000 | ~5 min | ~1,700/sec |
+| 1,000,000 | ~10 min | ~1,700/sec |
+
+> **Note**: Kaggle CSV import includes IMDB ratings automatically - no need for OMDB enrichment!
+
+### Example Output
+
+```
+$ python manage.py import_movies --bulk --file=TMDB_all_movies.csv --limit=500000
+
+📁 Detected format: CSV
+   ✨ Using Kaggle CSV parser (includes IMDB ratings!)
+
+Loading existing movie IDs for deduplication...
+Found 178 existing movies with TMDB IDs
+
+🎬 Starting bulk import from TMDB_all_movies.csv...
+   Limit: 500,000 movies
+   Batch size: 1,000
+   Only released: True
+   Min votes: 0
+
+Importing: 100%|██████████| 500000/500000 [04:52<00:00, 1710.42movies/s]
+
+============================================================
+✅ BULK IMPORT COMPLETE!
+============================================================
+   📥 Imported:        487,234 new movies
+   ⏭️  Skipped (exist): 178
+   ⚠️  Skipped (invalid):12,588
+   ⏱️  Time elapsed:    292.4 seconds
+   🚀 Import rate:     1,666 movies/second
+============================================================
+
+📊 Total movies in database: 487,412
+```
+
+### Verify Import
+
+```bash
+# Django shell
+python manage.py shell
+
+>>> from movies.models import Movie
+>>> Movie.objects.count()
+487412
+
+>>> Movie.objects.filter(genres__icontains='Action').count()
+68432
+
+>>> Movie.objects.order_by('-popularity')[:5].values_list('title', 'year', 'popularity')
+<QuerySet [('Avatar', 2009, 150.437), ('Avengers: Endgame', 2019, 134.23), ...]>
+```
+
+### Cleanup Duplicates
+
+```bash
+# Dry run (see what would be deleted)
+python manage.py cleanup_dups
+
+# Actually delete duplicates
+python manage.py cleanup_dups --execute
+
+# Dedupe by title+year instead of tmdb_id
+python manage.py cleanup_dups --by-title --execute
+```
+
+### Enrich with OMDB Data
+
+After bulk import, you can enrich movies with IMDB ratings, cast, and crew data:
+
+```bash
+# Enrich existing movies with OMDB data
+python manage.py import_movies --omdb --update-existing
+```
+
+---
+
 ## 🔑 API Configuration
 
 ### OMDB API Setup (Required for IMDB Integration)

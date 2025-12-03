@@ -109,29 +109,58 @@ class UserProfile(TimestampedModel):
 
 class Movie(TimestampedModel):
     """
-    Movie model with genre parsing capabilities.
+    Movie model with full IMDB data capabilities.
     
     Demonstrates: Inheritance, __str__, string operations,
                  collections (list/set), f-strings with format modifiers
     """
+    # Basic Info
     title = models.CharField(max_length=255)
     year = models.IntegerField(
         validators=[MinValueValidator(1888), MaxValueValidator(2100)]
     )
-    # Genres stored as comma-separated string, parsed to list/set
     genres = models.CharField(max_length=500, default='')
-    tmdb_id = models.IntegerField(null=True, blank=True, unique=True)
-    popularity = models.FloatField(default=0.0)
-    overview = models.TextField(blank=True, default='')
-    poster_path = models.CharField(max_length=255, blank=True, default='')
+    overview = models.TextField(blank=True, default='')  # Plot
+    poster_path = models.CharField(max_length=500, blank=True, default='')
     runtime = models.IntegerField(null=True, blank=True)  # in minutes
     
+    # IMDB Identifiers
+    imdb_id = models.CharField(max_length=20, blank=True, default='', db_index=True)
+    tmdb_id = models.IntegerField(null=True, blank=True, unique=True)
+    
+    # Ratings
+    imdb_rating = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    imdb_votes = models.CharField(max_length=50, blank=True, default='')
+    metascore = models.IntegerField(null=True, blank=True)
+    rotten_tomatoes = models.CharField(max_length=10, blank=True, default='')
+    
+    # Cast & Crew
+    director = models.CharField(max_length=500, blank=True, default='')
+    writer = models.CharField(max_length=500, blank=True, default='')
+    actors = models.CharField(max_length=1000, blank=True, default='')
+    
+    # Production Info
+    rated = models.CharField(max_length=20, blank=True, default='')  # PG, R, etc.
+    released = models.CharField(max_length=50, blank=True, default='')
+    language = models.CharField(max_length=200, blank=True, default='')
+    country = models.CharField(max_length=200, blank=True, default='')
+    awards = models.TextField(blank=True, default='')
+    
+    # Box Office
+    box_office = models.CharField(max_length=50, blank=True, default='')
+    production = models.CharField(max_length=200, blank=True, default='')
+    
+    # Internal
+    popularity = models.FloatField(default=0.0)
+    
     class Meta:
-        ordering = ['-popularity', 'title']
+        ordering = ['-popularity', '-imdb_rating', 'title']
         indexes = [
             models.Index(fields=['title']),
             models.Index(fields=['year']),
             models.Index(fields=['tmdb_id']),
+            models.Index(fields=['imdb_id']),
+            models.Index(fields=['imdb_rating']),
         ]
     
     def __str__(self) -> str:
@@ -203,6 +232,43 @@ class Movie(TimestampedModel):
         """
         return self.ratings.count()
     
+    @property
+    def imdb_url(self) -> str:
+        """Get the IMDB URL for this movie."""
+        if self.imdb_id:
+            return f"https://www.imdb.com/title/{self.imdb_id}/"
+        return ""
+    
+    @property
+    def letterboxd_url(self) -> str:
+        """Get the Letterboxd URL for this movie."""
+        slug = self.title.lower().replace(' ', '-').replace("'", "").replace(":", "")
+        return f"https://letterboxd.com/film/{slug}-{self.year}/"
+    
+    def get_directors_list(self) -> List[str]:
+        """Parse directors string into list."""
+        if not self.director:
+            return []
+        return [d.strip() for d in self.director.split(',') if d.strip()]
+    
+    def get_actors_list(self) -> List[str]:
+        """Parse actors string into list."""
+        if not self.actors:
+            return []
+        return [a.strip() for a in self.actors.split(',') if a.strip()]
+    
+    def get_countries_list(self) -> List[str]:
+        """Parse countries string into list."""
+        if not self.country:
+            return []
+        return [c.strip() for c in self.country.split(',') if c.strip()]
+    
+    def get_languages_list(self) -> List[str]:
+        """Parse languages string into list."""
+        if not self.language:
+            return []
+        return [l.strip() for l in self.language.split(',') if l.strip()]
+    
     def get_display_runtime(self) -> str:
         """
         Format runtime as hours and minutes.
@@ -259,6 +325,32 @@ class Movie(TimestampedModel):
         from django.db.models import Case, When
         preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(sorted_ids)])
         return Movie.objects.filter(pk__in=sorted_ids).order_by(preserved)
+    
+    @classmethod
+    def from_tmdb_json(cls, data: dict) -> 'Movie':
+        """
+        Create a Movie instance from TMDB JSON data.
+        
+        This is a factory method for creating Movie objects from the
+        TMDB bulk dataset. Use with bulk_create() for best performance.
+        
+        Args:
+            data: Dict with TMDB movie data (id, title, release_date, etc.)
+            
+        Returns:
+            Movie instance (not saved to database)
+            
+        Example:
+            movies = [Movie.from_tmdb_json(d) for d in tmdb_data]
+            Movie.objects.bulk_create(movies, ignore_conflicts=True)
+        """
+        from movies.services.tmdb_parser import TMDBParser
+        
+        fields = TMDBParser.movie_to_django_fields(data)
+        if not fields:
+            raise ValueError(f"Invalid movie data: {data}")
+        
+        return cls(**fields)
 
 
 class Rating(TimestampedModel):
