@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4"><i class="bi bi-star-fill text-warning me-2"></i>My Ratings</h1>
+    
+    <!-- Summary Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3>{{ ratings|length }}</h3>
+                    <p class="mb-0">Total Ratings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3>{{ average_rating|floatformat:1 }}</h3>
+                    <p class="mb-0">Average Rating</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Top Genres</h6>
+                    {% for genre, count in top_genres %}
+                    <span class="badge bg-secondary">{{ genre }} ({{ count }})</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ratings by Star Level -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Ratings by Star Level</h5>
+        </div>
+        <div class="card-body">
+            <div class="accordion" id="ratingsAccordion">
+                {% for stars, rating_list in grouped_ratings.items %}
+                {% if rating_list %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button {% if stars != 5 %}collapsed{% endif %}" type="button" 
+                                data-bs-toggle="collapse" data-bs-target="#collapse{{ stars }}">
+                            {{ stars }} Star{% if stars != 1 %}s{% endif %} 
+                            <span class="badge bg-primary ms-2">{{ rating_list|length }}</span>
+                        </button>
+                    </h2>
+                    <div id="collapse{{ stars }}" class="accordion-collapse collapse {% if stars == 5 %}show{% endif %}"
+                         data-bs-parent="#ratingsAccordion">
+                        <div class="accordion-body">
+                            <div class="row">
+                                {% for rating in rating_list %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="{% url 'movie_detail' rating.movie.pk %}">
+                                            {{ rating.movie.title }}
+                                        </a>
+                                        <span class="text-warning">{{ rating.get_star_display }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- All Ratings List -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">All Ratings</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Movie</th>
+                            <th>Rating</th>
+                            <th>Tags</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rating in ratings %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'movie_detail' rating.movie.pk %}">
+                                    {{ rating.movie.title }}
+                                </a>
+                                <small class="text-muted">({{ rating.movie.year }})</small>
+                            </td>
+                            <td class="text-warning">{{ rating.get_star_display }}</td>
+                            <td>
+                                {% for tag in rating.get_tags_list %}
+                                <span class="badge bg-secondary">{{ tag }}</span>
+                                {% endfor %}
+                            </td>
+                            <td>{{ rating.created_at|date:"M j, Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

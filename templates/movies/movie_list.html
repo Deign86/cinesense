@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4"><i class="bi bi-film me-2"></i>Browse Movies</h1>
+    
+    <!-- Search/Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="{% url 'movie_list' %}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        {{ search_form.query }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ search_form.genre }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ search_form.year_from }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ search_form.year_to }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ search_form.sort_by }}
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-2">
+                        {{ search_form.min_rating }}
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Search</button>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'movie_list' %}" class="btn btn-outline-secondary w-100">Clear</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Results Count -->
+    <p class="text-muted mb-3">
+        Showing {{ page_obj.paginator.count }} movie{{ page_obj.paginator.count|pluralize }}
+    </p>
+    
+    <!-- Movie Grid -->
+    <div class="row stagger-animate">
+        {% for movie in movies %}
+        <div class="col-md-4 col-lg-3 mb-4">
+            <div class="card movie-card h-100">
+                <div class="card-img-top movie-poster" style="height: 200px;">
+                    {% if movie.poster_path %}
+                    <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="img-fluid">
+                    {% else %}
+                    <i class="bi bi-film"></i>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{% url 'movie_detail' movie.pk %}" class="text-decoration-none">
+                            {{ movie.title }}
+                        </a>
+                    </h5>
+                    <p class="card-text">
+                        <small class="text-muted">{{ movie.year }}</small>
+                        {% if movie.avg_rating %}
+                        <span class="badge bg-warning text-dark float-end">
+                            <i class="bi bi-star-fill"></i> {{ movie.avg_rating|floatformat:1 }}
+                        </span>
+                        {% endif %}
+                    </p>
+                    <p class="card-text">
+                        <small>
+                            {% for genre in movie.get_genres_list|slice:":3" %}
+                            <span class="badge bg-secondary">{{ genre }}</span>
+                            {% endfor %}
+                        </small>
+                    </p>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a href="{% url 'movie_detail' movie.pk %}" class="btn btn-sm btn-outline-primary w-100">
+                        View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No movies found matching your criteria. Try adjusting your search filters.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Movie pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                    <span class="page-link">{{ num }}</span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link" href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}page={{ num }}">
+                        {{ num }}
+                    </a>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?{% if request.GET.query %}query={{ request.GET.query }}&{% endif %}page={{ page_obj.next_page_number }}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

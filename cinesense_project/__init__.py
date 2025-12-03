@@ -1,0 +1,1 @@
+# CineSense Django Project

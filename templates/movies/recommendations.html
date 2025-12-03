@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4"><i class="bi bi-robot me-2"></i>Personalized Recommendations</h1>
+    
+    {% if not has_recommendations %}
+    <!-- Not Enough Data -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <h3 class="mb-3"><i class="bi bi-camera-reels me-2"></i>Rate More Movies!</h3>
+            <p class="lead">{{ message }}</p>
+            <p>You need <strong>{{ movies_needed }}</strong> more rating{{ movies_needed|pluralize }} to unlock ML recommendations.</p>
+            <a href="{% url 'movie_list' %}" class="btn btn-primary btn-lg mt-3">
+                Browse Movies to Rate
+            </a>
+        </div>
+    </div>
+    {% else %}
+    
+    <!-- ML Recommendations -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Top Picks For You</h5>
+            <small>Based on your rating history using Linear Regression</small>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for rec in recommendations %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h5 class="card-title">
+                                    <a href="{% url 'movie_detail' rec.movie.pk %}" class="text-decoration-none">
+                                        {{ rec.movie.title }}
+                                    </a>
+                                </h5>
+                                <span class="badge bg-success">
+                                    Predicted: {{ rec.score_display }}★
+                                </span>
+                            </div>
+                            <p class="card-text">
+                                <small class="text-muted">{{ rec.movie.year }}</small>
+                            </p>
+                            <p class="card-text">
+                                {% for genre in rec.movie.get_genres_list|slice:":3" %}
+                                <span class="badge bg-secondary">{{ genre }}</span>
+                                {% endfor %}
+                            </p>
+                            {% if rec.movie.overview %}
+                            <p class="card-text small">
+                                {{ rec.movie.overview|truncatewords:20 }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a href="{% url 'movie_detail' rec.movie.pk %}" class="btn btn-sm btn-outline-primary">
+                                View & Rate
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Genre-Based Recommendations -->
+    {% if genre_recommendations %}
+    <h3 class="mb-3"><i class="bi bi-collection me-2"></i>By Your Favorite Genres</h3>
+    
+    {% for genre, movies in genre_recommendations.items %}
+    {% if movies %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <a href="{% url 'genre_movies' genre %}" class="text-decoration-none">
+                    {{ genre }}
+                </a>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for movie, score in movies %}
+                <div class="col-md-4 mb-2">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge bg-warning text-dark">{{ score|floatformat:1 }}★</span>
+                        </div>
+                        <div>
+                            <a href="{% url 'movie_detail' movie.pk %}">{{ movie.title }}</a>
+                            <small class="text-muted d-block">{{ movie.year }}</small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+    
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4"><i class="bi bi-graph-up me-2"></i>Analytics Dashboard</h1>
+    
+    <!-- Overall Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3>{{ rating_stats.total_ratings }}</h3>
+                    <p class="mb-0">Total Ratings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3>{{ rating_stats.mean|floatformat:2 }}</h3>
+                    <p class="mb-0">Average Rating</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3>{{ rating_stats.median|floatformat:2 }}</h3>
+                    <p class="mb-0">Median Rating</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body text-center">
+                    <h3>{{ rating_stats.std|floatformat:2 }}</h3>
+                    <p class="mb-0">Std Deviation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        {% if charts.genre_bar %}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Average Ratings by Genre</h5>
+                </div>
+                <div class="card-body">
+                    <img src="/media/{{ charts.genre_bar }}" alt="Genre Bar Chart" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if charts.rating_hist %}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Rating Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <img src="/media/{{ charts.rating_hist }}" alt="Rating Histogram" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% if charts.ratings_line %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Ratings Over Time</h5>
+                </div>
+                <div class="card-body">
+                    <img src="/media/{{ charts.ratings_line }}" alt="Ratings Timeline" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Genre Statistics Table -->
+    {% if genre_stats %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Genre Statistics</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Genre</th>
+                            <th>Count</th>
+                            <th>Mean</th>
+                            <th>Median</th>
+                            <th>Mode</th>
+                            <th>Std Dev</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for genre, stats in genre_stats.items %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'genre_movies' genre %}">{{ genre }}</a>
+                            </td>
+                            <td>{{ stats.count }}</td>
+                            <td>{{ stats.mean }}</td>
+                            <td>{{ stats.median }}</td>
+                            <td>{{ stats.mode }}</td>
+                            <td>{{ stats.std }}</td>
+                            <td>{{ stats.min }}</td>
+                            <td>{{ stats.max }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Watch Patterns -->
+    {% if watch_patterns.total_watches > 0 %}
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Watch Day Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% for day, count in watch_patterns.day_distribution.items %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ day }}</span>
+                        <div class="progress flex-grow-1 mx-3" style="height: 20px;">
+                            <div class="progress-bar" role="progressbar" aria-valuenow="{{ count }}" aria-valuemin="0" aria-valuemax="100">{{ count }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Genre Watch Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% for genre, count in watch_patterns.genre_distribution.items %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ genre }}</span>
+                        <span class="badge bg-primary">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% block extra_js %}
+<script>
+// Set progress bar widths dynamically
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-bar[aria-valuenow]').forEach(function(bar) {
+        var value = bar.getAttribute('aria-valuenow');
+        bar.style.width = value + '%';
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

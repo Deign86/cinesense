@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Add New Movie</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="id_title" class="form-label">Title *</label>
+                    {{ form.title }}
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_year" class="form-label">Year *</label>
+                        {{ form.year }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_runtime" class="form-label">Runtime (minutes)</label>
+                        {{ form.runtime }}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_genres_input" class="form-label">Genres</label>
+                    {{ form.genres_input }}
+                    <small class="form-text text-muted">Enter genres separated by commas</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_overview" class="form-label">Overview</label>
+                    {{ form.overview }}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_popularity" class="form-label">Popularity Score</label>
+                    {{ form.popularity }}
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Add Movie</button>
+                <a href="{% url 'movie_list' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
