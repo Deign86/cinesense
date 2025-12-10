@@ -19,8 +19,8 @@
             <div class="card">
                 <div class="card-img-top movie-poster bg-secondary d-flex align-items-center justify-content-center"
                     style="height: 450px;">
-                    {% if movie.poster_path %}
-                    <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="img-fluid"
+                    {% if movie.poster_url %}
+                    <img src="{{ movie.poster_url }}" alt="{{ movie.title }}" class="img-fluid"
                         style="max-height: 450px; width: 100%; object-fit: cover;">
                     {% elif imdb_data and imdb_data.poster and imdb_data.poster != 'N/A' %}
                     <img src="{{ imdb_data.poster }}" alt="{{ movie.title }}" class="img-fluid"
