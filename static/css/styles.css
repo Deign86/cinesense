@@ -1076,6 +1076,188 @@ a:hover { color: var(--accent-color); }
     box-shadow: 0 10px 30px rgba(245, 197, 24, 0.15);
 }
 
+/* Recommendations Page Styling */
+.recommendations-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.highlight-yellow {
+    color: var(--accent-color);
+    text-shadow: 0 0 20px rgba(245, 197, 24, 0.3);
+}
+
+/* Empty Recommendations Card */
+.recommendation-empty-card {
+    background: linear-gradient(135deg, rgba(245, 197, 24, 0.05), rgba(245, 197, 24, 0.02));
+    border: 2px solid rgba(245, 197, 24, 0.3);
+    border-radius: 16px;
+}
+
+.empty-rec-icon i {
+    font-size: 5rem;
+    color: var(--accent-color);
+    opacity: 0.7;
+    animation: float 3s ease-in-out infinite;
+}
+
+/* ML Recommendations Card */
+.ml-recommendations-card {
+    border: 1px solid rgba(245, 197, 24, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.recommendation-header {
+    background: linear-gradient(135deg, rgba(245, 197, 24, 0.1), rgba(245, 197, 24, 0.05));
+    border-bottom: 2px solid rgba(245, 197, 24, 0.3);
+    padding: 1.25rem;
+}
+
+.recommendation-header h5 {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+/* Recommendation Movie Cards */
+.recommendation-movie-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: all var(--transition-medium);
+    position: relative;
+    overflow: hidden;
+}
+
+.recommendation-movie-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, rgba(245, 197, 24, 0.08) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity var(--transition-medium);
+    pointer-events: none;
+}
+
+.recommendation-movie-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(245, 197, 24, 0.4);
+    box-shadow: 0 15px 35px rgba(245, 197, 24, 0.2);
+}
+
+.recommendation-movie-card:hover::before {
+    opacity: 1;
+}
+
+.rec-movie-link {
+    color: var(--text-primary);
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.rec-movie-link:hover {
+    color: var(--accent-color);
+}
+
+.predicted-score-badge {
+    background: linear-gradient(135deg, var(--accent-color), #ffd700);
+    color: var(--bg-primary);
+    font-weight: 700;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 10px rgba(245, 197, 24, 0.3);
+}
+
+/* Genre Recommendations */
+.genre-rec-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.75rem;
+}
+
+.genre-recommendation-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    transition: all var(--transition-medium);
+}
+
+.genre-recommendation-card:hover {
+    border-color: rgba(245, 197, 24, 0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.genre-card-header {
+    background: linear-gradient(135deg, rgba(245, 197, 24, 0.05), transparent);
+    border-bottom: 1px solid rgba(245, 197, 24, 0.2);
+}
+
+.genre-title-link {
+    color: var(--text-primary);
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+}
+
+.genre-title-link:hover {
+    color: var(--accent-color);
+    transform: translateX(5px);
+}
+
+.genre-title-link i {
+    color: var(--accent-color);
+    transition: transform var(--transition-fast);
+}
+
+.genre-title-link:hover i {
+    transform: rotate(15deg);
+}
+
+/* Genre Movie Items */
+.genre-movie-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast);
+}
+
+.genre-movie-item:hover {
+    background: rgba(245, 197, 24, 0.08);
+    border-color: rgba(245, 197, 24, 0.3);
+    transform: translateX(5px);
+}
+
+.genre-score-badge {
+    background: linear-gradient(135deg, var(--accent-color), #ffd700);
+    color: var(--bg-primary);
+    font-weight: 700;
+    padding: 0.35rem 0.6rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 8px rgba(245, 197, 24, 0.3);
+}
+
+.genre-movie-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--transition-fast);
+}
+
+.genre-movie-link:hover {
+    color: var(--accent-color);
+}
+
 /* Star Rating (legacy) */
 .star-rating { color: var(--accent-color); font-size: 1.2rem; }
 .star-rating i { margin-right: 2px; }

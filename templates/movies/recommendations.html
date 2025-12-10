@@ -5,42 +5,46 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="mb-4"><i class="bi bi-robot me-2"></i>Personalized Recommendations</h1>
+    <h1 class="mb-4 recommendations-title"><i class="bi bi-robot me-2"></i>Personalized <span class="highlight-yellow">Recommendations</span></h1>
     
     {% if not has_recommendations %}
     <!-- Not Enough Data -->
-    <div class="card">
+    <div class="card recommendation-empty-card">
         <div class="card-body text-center py-5">
-            <h3 class="mb-3"><i class="bi bi-camera-reels me-2"></i>Rate More Movies!</h3>
-            <p class="lead">{{ message }}</p>
-            <p>You need <strong>{{ movies_needed }}</strong> more rating{{ movies_needed|pluralize }} to unlock ML recommendations.</p>
-            <a href="{% url 'movie_list' %}" class="btn btn-primary btn-lg mt-3">
+            <div class="empty-rec-icon mb-4">
+                <i class="bi bi-camera-reels"></i>
+            </div>
+            <h3 class="mb-3 text-white">Rate More Movies!</h3>
+            <p class="lead text-secondary">{{ message }}</p>
+            <p class="text-secondary">You need <strong class="highlight-yellow">{{ movies_needed }}</strong> more rating{{ movies_needed|pluralize }} to unlock ML recommendations.</p>
+            <a href="{% url 'movie_list' %}" class="btn btn-services btn-lg mt-3">
                 Browse Movies to Rate
+                <span class="btn-icon"><i class="bi bi-arrow-right"></i></span>
             </a>
         </div>
     </div>
     {% else %}
     
     <!-- ML Recommendations -->
-    <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Top Picks For You</h5>
-            <small>Based on your rating history using Linear Regression</small>
+    <div class="card mb-4 ml-recommendations-card">
+        <div class="card-header recommendation-header">
+            <h5 class="mb-0"><i class="bi bi-bullseye me-2 text-warning"></i><span class="highlight-yellow">Top Picks</span> For You</h5>
+            <small class="text-secondary">Based on your rating history using Linear Regression</small>
         </div>
         <div class="card-body">
             <div class="row">
                 {% for rec in recommendations %}
                 <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card h-100">
+                    <div class="card h-100 recommendation-movie-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start">
                                 <h5 class="card-title">
-                                    <a href="{% url 'movie_detail' rec.movie.pk %}" class="text-decoration-none">
+                                    <a href="{% url 'movie_detail' rec.movie.pk %}" class="text-decoration-none rec-movie-link">
                                         {{ rec.movie.title }}
                                     </a>
                                 </h5>
-                                <span class="badge bg-success">
-                                    Predicted: {{ rec.score_display }}★
+                                <span class="badge predicted-score-badge">
+                                    {{ rec.score_display }}<i class="bi bi-star-fill ms-1"></i>
                                 </span>
                             </div>
                             <p class="card-text">
@@ -71,15 +75,15 @@
     
     <!-- Genre-Based Recommendations -->
     {% if genre_recommendations %}
-    <h3 class="mb-3"><i class="bi bi-collection me-2"></i>By Your Favorite Genres</h3>
+    <h3 class="mb-3 genre-rec-title"><i class="bi bi-collection me-2 text-warning"></i>By Your <span class="highlight-yellow">Favorite Genres</span></h3>
     
     {% for genre, movies in genre_recommendations.items %}
     {% if movies %}
-    <div class="card mb-3">
-        <div class="card-header">
+    <div class="card mb-3 genre-recommendation-card">
+        <div class="card-header genre-card-header">
             <h5 class="mb-0">
-                <a href="{% url 'genre_movies' genre %}" class="text-decoration-none">
-                    {{ genre }}
+                <a href="{% url 'genre_movies' genre %}" class="text-decoration-none genre-title-link">
+                    <i class="bi bi-tag-fill me-2"></i>{{ genre }}
                 </a>
             </h5>
         </div>
@@ -87,12 +91,12 @@
             <div class="row">
                 {% for movie, score in movies %}
                 <div class="col-md-4 mb-2">
-                    <div class="d-flex align-items-center">
+                    <div class="genre-movie-item">
                         <div class="me-3">
-                            <span class="badge bg-warning text-dark">{{ score|floatformat:1 }}★</span>
+                            <span class="badge genre-score-badge">{{ score|floatformat:1 }}<i class="bi bi-star-fill ms-1"></i></span>
                         </div>
                         <div>
-                            <a href="{% url 'movie_detail' movie.pk %}">{{ movie.title }}</a>
+                            <a href="{% url 'movie_detail' movie.pk %}" class="genre-movie-link">{{ movie.title }}</a>
                             <small class="text-muted d-block">{{ movie.year }}</small>
                         </div>
                     </div>
