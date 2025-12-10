@@ -181,10 +181,14 @@ class Movie(TimestampedModel):
         Demonstrates: String modification, list comprehension, 
                      conditional logic in comprehension
         """
-        if not self.genres:
+        if not self.genres or self.genres == '[]':
             return []
+        
+        # Remove brackets if they exist (parser artifact)
+        clean_genres = self.genres.replace('[', '').replace(']', '').replace("'", "").replace('"', "")
+        
         # String split and strip, filtering empty strings
-        return [g.strip().title() for g in self.genres.split(',') if g.strip()]
+        return [g.strip().title() for g in clean_genres.split(',') if g.strip()]
     
     def get_genres_set(self) -> Set[str]:
         """
@@ -238,6 +242,8 @@ class Movie(TimestampedModel):
         if self.imdb_id:
             return f"https://www.imdb.com/title/{self.imdb_id}/"
         return ""
+
+
     
     @property
     def letterboxd_url(self) -> str:

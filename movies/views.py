@@ -23,7 +23,9 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib import messages
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, Value, FloatField
+from django.db.models.functions import Coalesce
+from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.conf import settings
 from django.urls import reverse_lazy
@@ -94,6 +96,25 @@ def home(request):
     }
     
     return render(request, 'movies/home.html', context)
+
+
+def search_suggestions(request):
+    """
+    API endpoint for search suggestions.
+    """
+    query = request.GET.get('query', '')
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+    
+    movies = Movie.objects.filter(title__icontains=query)[:5]
+    results = [{
+        'id': m.id, 
+        'title': m.title, 
+        'year': m.year, 
+        'poster_path': m.poster_path
+    } for m in movies]
+    
+    return JsonResponse({'results': results})
 
 
 class MovieListView(ListView):
@@ -170,9 +191,9 @@ class MovieListView(ListView):
             if sort_by == 'avg_rating':
                 # OPTIMIZATION: Only annotate if specifically sorting by rating
                 queryset = queryset.annotate(
-                    avg_rating=Avg('ratings__stars'),
+                    avg_rating=Coalesce(Avg('ratings__stars'), Value(0.0), output_field=FloatField()),
                     num_ratings=Count('ratings')
-                ).order_by('-avg_rating', '-rating_count')
+                ).order_by('-avg_rating', '-num_ratings')
             elif sort_by:
                 # Handle reverse sorting (prefix with -)
                 if sort_by.startswith('-'):

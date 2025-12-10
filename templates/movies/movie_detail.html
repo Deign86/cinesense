@@ -12,16 +12,19 @@
             <li class="breadcrumb-item active">{{ movie.title }}</li>
         </ol>
     </nav>
-    
+
     <div class="row">
         <!-- Movie Poster & Quick Info -->
         <div class="col-md-4 mb-4">
             <div class="card">
-                <div class="card-img-top movie-poster bg-secondary d-flex align-items-center justify-content-center" style="height: 450px;">
+                <div class="card-img-top movie-poster bg-secondary d-flex align-items-center justify-content-center"
+                    style="height: 450px;">
                     {% if movie.poster_path %}
-                    <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="img-fluid" style="max-height: 450px; width: 100%; object-fit: cover;">
+                    <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="img-fluid"
+                        style="max-height: 450px; width: 100%; object-fit: cover;">
                     {% elif imdb_data and imdb_data.poster and imdb_data.poster != 'N/A' %}
-                    <img src="{{ imdb_data.poster }}" alt="{{ movie.title }}" class="img-fluid" style="max-height: 450px; width: 100%; object-fit: cover;">
+                    <img src="{{ imdb_data.poster }}" alt="{{ movie.title }}" class="img-fluid"
+                        style="max-height: 450px; width: 100%; object-fit: cover;">
                     {% else %}
                     <i class="bi bi-film display-1"></i>
                     {% endif %}
@@ -43,7 +46,7 @@
                         </div>
                         <span class="text-muted">{{ movie.rating_count }} user ratings</span>
                     </div>
-                    
+
                     <!-- Quick Stats -->
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item d-flex justify-content-between">
@@ -75,33 +78,35 @@
                         </li>
                         {% endif %}
                     </ul>
-                    
+
                     <!-- External Links -->
                     <div class="mt-3 d-grid gap-2">
                         {% if movie.imdb_id %}
-                        <a href="https://www.imdb.com/title/{{ movie.imdb_id }}/" target="_blank" class="btn btn-outline-warning btn-sm">
+                        <a href="https://www.imdb.com/title/{{ movie.imdb_id }}/" target="_blank"
+                            class="btn btn-outline-warning btn-sm">
                             <i class="bi bi-box-arrow-up-right me-1"></i>View on IMDb
                         </a>
                         {% endif %}
-                        <a href="https://letterboxd.com/search/{{ movie.title|urlencode }}/" target="_blank" class="btn btn-outline-success btn-sm">
+                        <a href="https://letterboxd.com/search/{{ movie.title|urlencode }}/" target="_blank"
+                            class="btn btn-outline-success btn-sm">
                             <i class="bi bi-box-arrow-up-right me-1"></i>Find on Letterboxd
                         </a>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Movie Details -->
         <div class="col-md-8">
             <h1 class="mb-2">{{ movie.title }} <small class="text-muted">({{ movie.year }})</small></h1>
-            
+
             <!-- Meta info line -->
             <p class="text-muted mb-3">
                 {% if movie.rated %}{{ movie.rated }} • {% endif %}
                 {% if movie.runtime %}{{ movie.get_display_runtime }} • {% endif %}
                 {% if movie.released %}{{ movie.released }}{% endif %}
             </p>
-            
+
             <!-- Genres -->
             <div class="mb-4">
                 {% for genre in movie.get_genres_list %}
@@ -110,7 +115,7 @@
                 </a>
                 {% endfor %}
             </div>
-            
+
             <!-- All Ratings Card -->
             <div class="card mb-4">
                 <div class="card-header">
@@ -132,7 +137,9 @@
                         {% if movie.metascore %}
                         <div class="col-md-3 col-6 text-center">
                             <div class="p-3 rounded" style="background-color: var(--bg-secondary);">
-                                <div class="fs-3 fw-bold {% if movie.metascore >= 60 %}text-success{% elif movie.metascore >= 40 %}text-warning{% else %}text-danger{% endif %}">{{ movie.metascore }}</div>
+                                <div
+                                    class="fs-3 fw-bold {% if movie.metascore >= 60 %}text-success{% elif movie.metascore >= 40 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ movie.metascore }}</div>
                                 <div class="small text-muted">Metascore</div>
                             </div>
                         </div>
@@ -155,7 +162,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Plot/Overview -->
             {% if movie.overview %}
             <div class="card mb-4">
@@ -167,7 +174,7 @@
                 </div>
             </div>
             {% endif %}
-            
+
             <!-- Cast & Crew -->
             {% if movie.director or movie.actors or movie.writer %}
             <div class="card mb-4">
@@ -196,7 +203,7 @@
                 </div>
             </div>
             {% endif %}
-            
+
             <!-- Awards & Box Office -->
             {% if movie.awards or movie.box_office %}
             <div class="card mb-4">
@@ -219,7 +226,7 @@
                 </div>
             </div>
             {% endif %}
-            
+
             <!-- Rating Form -->
             {% if user.is_authenticated %}
             <div class="card mb-4">
@@ -235,16 +242,20 @@
                 <div class="card-body">
                     <form method="post" action="{% url 'rate_movie' movie.pk %}">
                         {% csrf_token %}
-                        
+
+
                         <div class="mb-3">
                             <label class="form-label">Rating</label>
                             <div class="star-rating-input">
                                 {% for value, label in rating_form.fields.stars.choices %}
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" 
-                                           name="stars" id="stars_{{ forloop.counter }}" 
-                                           value="{{ value }}"
-                                           {% if user_rating and user_rating.stars == value %}checked{% endif %}>
+                                    {% if user_rating and user_rating.stars == value %}
+                                    <input class="form-check-input" type="radio" name="stars"
+                                        id="stars_{{ forloop.counter }}" value="{{ value }}" checked>
+                                    {% else %}
+                                    <input class="form-check-input" type="radio" name="stars"
+                                        id="stars_{{ forloop.counter }}" value="{{ value }}">
+                                    {% endif %}
                                     <label class="form-check-label" for="stars_{{ forloop.counter }}">
                                         {{ label }}
                                     </label>
@@ -252,21 +263,20 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="id_tags" class="form-label">Tags</label>
                             <input type="text" class="form-control" name="tags" id="id_tags"
-                                   placeholder="fun, exciting, classic"
-                                   value="{{ user_rating.tags|default:'' }}">
+                                placeholder="fun, exciting, classic" value="{{ user_rating.tags|default:'' }}">
                             <small class="form-text text-muted">Comma-separated tags</small>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="id_review_text" class="form-label">Review (optional)</label>
                             <textarea class="form-control" name="review_text" id="id_review_text" rows="3"
-                                      placeholder="Write your review here...">{{ user_rating.review_text|default:'' }}</textarea>
+                                placeholder="Write your review here...">{{ user_rating.review_text|default:'' }}</textarea>
                         </div>
-                        
+
                         <button type="submit" class="btn btn-primary">
                             {% if user_rating %}Update Rating{% else %}Submit Rating{% endif %}
                         </button>
@@ -278,7 +288,7 @@
                 <a href="{% url 'admin:login' %}">Login</a> to rate this movie.
             </div>
             {% endif %}
-            
+
             <!-- Rating Distribution -->
             {% if rating_distribution %}
             <div class="card mb-4">
@@ -290,8 +300,8 @@
                     <div class="d-flex align-items-center mb-2">
                         <span class="me-2" style="width: 60px;">{{ stars }} star{{ stars|pluralize }}</span>
                         <div class="progress flex-grow-1" style="height: 20px;">
-                            <div class="progress-bar bg-warning" role="progressbar" 
-                                 aria-valuenow="{{ count }}" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar bg-warning" role="progressbar" aria-valuenow="{{ count }}"
+                                aria-valuemin="0" aria-valuemax="100">
                                 {{ count }}
                             </div>
                         </div>
@@ -300,7 +310,7 @@
                 </div>
             </div>
             {% endif %}
-            
+
             <!-- Tags -->
             {% if all_tags %}
             <div class="card mb-4">
@@ -316,7 +326,7 @@
             {% endif %}
         </div>
     </div>
-    
+
     <!-- Recent Reviews -->
     {% if ratings %}
     <div class="card mt-4">
@@ -347,7 +357,7 @@
         </div>
     </div>
     {% endif %}
-    
+
     <!-- Similar Movies -->
     {% if similar_movies %}
     <div class="mt-4">
@@ -379,13 +389,13 @@
 
 {% block extra_js %}
 <script>
-// Set progress bar widths dynamically
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.progress-bar[aria-valuenow]').forEach(function(bar) {
-        var value = bar.getAttribute('aria-valuenow');
-        bar.style.width = value + '%';
+    // Set progress bar widths dynamically
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.progress-bar[aria-valuenow]').forEach(function (bar) {
+            var value = bar.getAttribute('aria-valuenow');
+            bar.style.width = value + '%';
+        });
     });
-});
 </script>
 {% endblock %}
 {% endblock %}
