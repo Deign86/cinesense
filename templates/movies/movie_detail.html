@@ -94,14 +94,35 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Rating Distribution -->
+            {% if rating_distribution %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0 detail-section-title"><i class="bi bi-bar-chart-line me-2"></i>Rating Distribution</h5>
+                </div>
+                <div class="card-body">
+                    {% for stars, count in rating_distribution.items %}
+                    <div class="rating-dist-item">
+                        <span class="rating-label">{{ stars }}★</span>
+                        <div class="rating-bar-container">
+                            <div class="rating-bar" style="width: {% widthratio count movie.rating_count 100 %}%">
+                            </div>
+                        </div>
+                        <span class="rating-count">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Movie Details -->
         <div class="col-md-8">
-            <h1 class="mb-2">{{ movie.title }} <small class="text-muted">({{ movie.year }})</small></h1>
+            <h1 class="mb-2">{{ movie.title }} <span class="movie-year">({{ movie.year }})</span></h1>
 
             <!-- Meta info line -->
-            <p class="text-muted mb-3">
+            <p class="movie-meta mb-3">
                 {% if movie.rated %}{{ movie.rated }} • {% endif %}
                 {% if movie.runtime %}{{ movie.get_display_runtime }} • {% endif %}
                 {% if movie.released %}{{ movie.released }}{% endif %}
@@ -119,7 +140,7 @@
             <!-- All Ratings Card -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-bar-chart-fill me-2"></i>Ratings</h5>
+                    <h5 class="mb-0 detail-section-title"><i class="bi bi-star-fill me-2"></i>Ratings</h5>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -167,7 +188,7 @@
             {% if movie.overview %}
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-file-text me-2"></i>Plot</h5>
+                    <h5 class="mb-0 detail-section-title"><i class="bi bi-file-text me-2"></i>Plot</h5>
                 </div>
                 <div class="card-body">
                     <p class="card-text lead">{{ movie.overview }}</p>
@@ -179,7 +200,7 @@
             {% if movie.director or movie.actors or movie.writer %}
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i>Cast & Crew</h5>
+                    <h5 class="mb-0 detail-section-title"><i class="bi bi-people-fill me-2"></i>Cast & Crew</h5>
                 </div>
                 <div class="card-body">
                     {% if movie.director %}
@@ -208,7 +229,7 @@
             {% if movie.awards or movie.box_office %}
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0"><i class="bi bi-trophy-fill me-2"></i>Awards & Box Office</h5>
+                    <h5 class="mb-0 detail-section-title"><i class="bi bi-trophy-fill me-2"></i>Awards & Box Office</h5>
                 </div>
                 <div class="card-body">
                     {% if movie.awards %}
@@ -229,9 +250,10 @@
 
             <!-- Rating Form -->
             {% if user.is_authenticated %}
-            <div class="card mb-4">
+            <div class="card mb-4 rate-movie-card">
                 <div class="card-header">
-                    <h5 class="mb-0">
+                    <h5 class="mb-0 detail-section-title">
+                        <i class="bi bi-star me-2"></i>
                         {% if user_rating %}
                         Update Your Rating
                         {% else %}
@@ -243,23 +265,16 @@
                     <form method="post" action="{% url 'rate_movie' movie.pk %}">
                         {% csrf_token %}
 
-
-                        <div class="mb-3">
-                            <label class="form-label">Rating</label>
-                            <div class="star-rating-input">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold mb-3">Your Rating</label>
+                            <div class="star-rating-select">
                                 {% for value, label in rating_form.fields.stars.choices %}
-                                <div class="form-check form-check-inline">
-                                    {% if user_rating and user_rating.stars == value %}
-                                    <input class="form-check-input" type="radio" name="stars"
-                                        id="stars_{{ forloop.counter }}" value="{{ value }}" checked>
-                                    {% else %}
-                                    <input class="form-check-input" type="radio" name="stars"
-                                        id="stars_{{ forloop.counter }}" value="{{ value }}">
-                                    {% endif %}
-                                    <label class="form-check-label" for="stars_{{ forloop.counter }}">
-                                        {{ label }}
-                                    </label>
-                                </div>
+                                <input type="radio" name="stars" id="star_{{ value }}" value="{{ value }}" 
+                                    {% if user_rating and user_rating.stars == value %}checked{% endif %}>
+                                <label for="star_{{ value }}" class="star-label">
+                                    <i class="bi bi-star-fill"></i>
+                                    <span class="star-value">{{ value }}</span>
+                                </label>
                                 {% endfor %}
                             </div>
                         </div>
@@ -289,33 +304,11 @@
             </div>
             {% endif %}
 
-            <!-- Rating Distribution -->
-            {% if rating_distribution %}
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Rating Distribution</h5>
-                </div>
-                <div class="card-body">
-                    {% for stars, count in rating_distribution.items %}
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="me-2" style="width: 60px;">{{ stars }} star{{ stars|pluralize }}</span>
-                        <div class="progress flex-grow-1" style="height: 20px;">
-                            <div class="progress-bar bg-warning" role="progressbar" aria-valuenow="{{ count }}"
-                                aria-valuemin="0" aria-valuemax="100">
-                                {{ count }}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
             <!-- Tags -->
             {% if all_tags %}
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Tags</h5>
+                    <h5 class="mb-0 detail-section-title"><i class="bi bi-tags me-2"></i>Tags</h5>
                 </div>
                 <div class="card-body">
                     {% for tag in all_tags %}
@@ -331,7 +324,7 @@
     {% if ratings %}
     <div class="card mt-4">
         <div class="card-header">
-            <h5 class="mb-0">Recent Reviews</h5>
+            <h5 class="mb-0 detail-section-title"><i class="bi bi-chat-quote me-2"></i>Recent Reviews</h5>
         </div>
         <div class="card-body">
             {% for rating in ratings %}
