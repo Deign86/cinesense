@@ -870,8 +870,12 @@ body {
     transition: all var(--transition-fast);
 }
 .dropdown-item:hover { 
-    background-color: var(--bg-card-hover); 
+    background-color: rgba(245, 197, 24, 0.1); 
+    color: var(--text-primary);
     transform: translateX(5px);
+}
+.dropdown-item:hover i {
+    color: var(--accent-color);
 }
 
 /* Footer */
@@ -1494,6 +1498,289 @@ a:hover { color: var(--accent-color); }
     font-size: 0.85rem;
     color: var(--text-muted);
     font-style: italic;
+}
+
+/* Analytics Dashboard Styling */
+.analytics-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+/* Analytics Stat Cards */
+.analytics-stat-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: all var(--transition-medium);
+    position: relative;
+    overflow: hidden;
+}
+
+.analytics-stat-card-tall {
+    padding: 2rem 1.75rem;
+    min-height: 180px;
+    height: 100%;
+}
+
+.analytics-stat-card-tall .stat-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.analytics-stat-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 150%;
+    height: 150%;
+    background: radial-gradient(circle, rgba(245, 197, 24, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity var(--transition-medium);
+}
+
+.analytics-stat-card:hover {
+    border-color: rgba(245, 197, 24, 0.4);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(245, 197, 24, 0.2);
+}
+
+.analytics-stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    color: var(--accent-color);
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245, 197, 24, 0.1);
+    border-radius: 12px;
+    transition: all var(--transition-medium);
+}
+
+.analytics-stat-card:hover .stat-icon {
+    transform: scale(1.15) rotate(5deg);
+    background: rgba(245, 197, 24, 0.2);
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    margin: 0;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 500;
+}
+
+.stat-description {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0.5rem 0 0 0;
+    font-style: italic;
+    line-height: 1.3;
+}
+
+/* Analytics Chart Cards */
+.analytics-chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all var(--transition-medium);
+}
+
+.analytics-chart-card:hover {
+    border-color: rgba(245, 197, 24, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    transform: translateY(-3px);
+}
+
+.analytics-card-header {
+    background: linear-gradient(135deg, rgba(245, 197, 24, 0.08), rgba(245, 197, 24, 0.03));
+    border-bottom: 2px solid rgba(245, 197, 24, 0.2);
+    padding: 1.25rem;
+}
+
+.analytics-card-header h5 {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+/* Analytics Table */
+.analytics-table-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.analytics-table {
+    width: 100%;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.analytics-table thead {
+    background: linear-gradient(135deg, rgba(245, 197, 24, 0.15), rgba(245, 197, 24, 0.08));
+}
+
+.analytics-table thead th {
+    color: var(--text-primary);
+    font-weight: 700;
+    padding: 1rem;
+    border-bottom: 2px solid rgba(245, 197, 24, 0.3);
+    white-space: nowrap;
+}
+
+.analytics-table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.analytics-table-row {
+    transition: all var(--transition-fast);
+}
+
+.analytics-table-row:hover {
+    background: rgba(245, 197, 24, 0.05);
+}
+
+.genre-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.genre-link:hover {
+    color: var(--accent-color);
+}
+
+.genre-link i {
+    color: var(--accent-color);
+}
+
+/* Analytics Pattern Cards */
+.analytics-pattern-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all var(--transition-medium);
+}
+
+.analytics-pattern-card:hover {
+    border-color: rgba(245, 197, 24, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Watch Pattern Items */
+.watch-pattern-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.pattern-label {
+    font-weight: 600;
+    color: var(--text-primary);
+    min-width: 100px;
+}
+
+.pattern-bar-container {
+    flex: 1;
+    height: 32px;
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+.pattern-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color), #ffd700);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 0.75rem;
+    transition: width 0.6s ease-out;
+    box-shadow: 0 0 15px rgba(245, 197, 24, 0.4);
+}
+
+.pattern-count {
+    color: var(--bg-primary);
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+/* Genre Watch Items */
+.genre-watch-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem;
+    margin-bottom: 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    transition: all var(--transition-fast);
+}
+
+.genre-watch-item:hover {
+    background: rgba(245, 197, 24, 0.08);
+    border-color: rgba(245, 197, 24, 0.3);
+    transform: translateX(5px);
+}
+
+.genre-watch-label {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.genre-watch-label i {
+    color: var(--accent-color);
+}
+
+.genre-watch-badge {
+    background: linear-gradient(135deg, var(--accent-color), #ffd700);
+    color: var(--bg-primary);
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 10px rgba(245, 197, 24, 0.3);
+}
+
+/* Browse Movies Title */
+.browse-movies-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
 }
 
 /* Responsive Adjustments */
