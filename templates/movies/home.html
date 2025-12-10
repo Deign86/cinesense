@@ -3,39 +3,44 @@
 
 {% block title %}{{ page_title }}{% endblock %}
 
-{% block content %}
+{% block hero %}
 <!-- Hero Section -->
 <section class="hero-section">
-    <div class="row align-items-center">
-        <div class="col-lg-7">
-            <h1 class="hero-title">
-                <span>The CineSense</span>
-                <span>Movie</span>
-                <span>Recommendation</span>
-                <span>System</span>
-            </h1>
-            <p class="hero-description mb-4">
-                Discover movies tailored to your taste using machine learning recommendations. 
-                We offer personalized suggestions, detailed analytics, and smart insights 
-                to elevate your movie-watching experience.
-            </p>
-            <div class="d-flex gap-3">
-                <a href="{% url 'movie_list' %}" class="btn btn-services">
-                    Browse Movies
-                    <span class="btn-icon"><i class="bi bi-arrow-right"></i></span>
-                </a>
-                {% if user.is_authenticated %}
-                <a href="{% url 'recommendations' %}" class="btn btn-success btn-lg">
-                    <i class="bi bi-magic me-2"></i>Get Recommendations
-                </a>
-                {% endif %}
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="hero-title">
+                    <span>The CineSense</span>
+                    <span>Movie</span>
+                    <span>Recommendation</span>
+                    <span>System</span>
+                </h1>
+                <p class="hero-description mb-4">
+                    Discover movies tailored to your taste using machine learning recommendations. 
+                    We offer personalized suggestions, detailed analytics, and smart insights 
+                    to elevate your movie-watching experience.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'movie_list' %}" class="btn btn-services">
+                        Browse Movies
+                        <span class="btn-icon"><i class="bi bi-arrow-right"></i></span>
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'recommendations' %}" class="btn btn-success btn-lg">
+                        <i class="bi bi-magic me-2"></i>Get Recommendations
+                    </a>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-        <div class="col-lg-5 d-none d-lg-block">
-            <div class="hero-3d-element"></div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="hero-3d-element"></div>
+            </div>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block content %}
 
 <!-- About Section -->
 <section class="about-section">
@@ -149,14 +154,18 @@
 
 <!-- Featured Movies -->
 {% if featured_movies %}
-<section class="section">
+<section class="section mb-5">
     <h2 class="section-title mb-4"><i class="bi bi-trophy me-2"></i>Top Rated Movies</h2>
     <div class="row stagger-animate">
         {% for movie in featured_movies %}
         <div class="col-md-4 col-lg-2 mb-4">
             <div class="card movie-card h-100">
                 <div class="card-img-top movie-poster">
+                    {% if movie.poster_path %}
+                    <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="img-fluid">
+                    {% else %}
                     <i class="bi bi-film"></i>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <h6 class="card-title">
@@ -182,7 +191,7 @@
 
 <!-- Popular Genres -->
 {% if popular_genres %}
-<section class="section">
+<section class="section mb-5">
     <h2 class="section-title mb-4"><i class="bi bi-tags me-2"></i>Popular Genres</h2>
     <div class="d-flex flex-wrap gap-2">
         {% for genre, count in popular_genres %}
@@ -196,14 +205,18 @@
 
 <!-- Recent Movies -->
 {% if recent_movies %}
-<section class="section">
+<section class="section mb-5">
     <h2 class="section-title mb-4"><i class="bi bi-clock-history me-2"></i>Recently Added</h2>
     <div class="row">
         {% for movie in recent_movies %}
         <div class="col-md-4 col-lg-2 mb-4">
             <div class="card movie-card h-100">
                 <div class="card-img-top movie-poster">
+                    {% if movie.poster_path %}
+                    <img src="{{ movie.poster_path }}" alt="{{ movie.title }}" class="img-fluid">
+                    {% else %}
                     <i class="bi bi-film"></i>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <h6 class="card-title">
@@ -223,25 +236,55 @@
 {% endif %}
 
 <!-- Special Offer Section -->
-<section class="special-offer-section">
-    <h2 class="special-offer-title">
-        SPECIAL OFFER<br>
-        FOR NEW USERS
-    </h2>
-    <p class="special-offer-description">
-        Sign up today and start rating movies to unlock personalized recommendations 
-        powered by machine learning. Let us help you discover your next favorite film.
-    </p>
-    {% if not user.is_authenticated %}
-    <a href="{% url 'admin:login' %}" class="btn btn-services">
-        Get Started
-        <span class="btn-icon"><i class="bi bi-arrow-right"></i></span>
-    </a>
-    {% else %}
-    <a href="{% url 'recommendations' %}" class="btn btn-services">
-        View Recommendations
-        <span class="btn-icon"><i class="bi bi-arrow-right"></i></span>
-    </a>
-    {% endif %}
+<section class="section mb-5">
+    <div class="special-offer-card">
+        <div class="special-offer-glow"></div>
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="special-offer-badge">
+                    <i class="bi bi-stars me-2"></i>LIMITED TIME
+                </div>
+                <h2 class="special-offer-title">
+                    SPECIAL OFFER<br>
+                    <span class="highlight">FOR NEW USERS</span>
+                </h2>
+                <p class="special-offer-description">
+                    Sign up today and start rating movies to unlock personalized recommendations 
+                    powered by machine learning. Let us help you discover your next favorite film.
+                </p>
+                <div class="special-offer-features">
+                    <div class="feature-item">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Unlimited Movie Access</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>AI-Powered Recommendations</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Personalized Analytics</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <div class="special-offer-cta">
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'admin:login' %}" class="btn btn-offer">
+                        Get Started Now
+                        <span class="btn-icon"><i class="bi bi-arrow-right"></i></span>
+                    </a>
+                    <p class="cta-note">No credit card required</p>
+                    {% else %}
+                    <a href="{% url 'recommendations' %}" class="btn btn-offer">
+                        View Recommendations
+                        <span class="btn-icon"><i class="bi bi-magic"></i></span>
+                    </a>
+                    <p class="cta-note">Powered by ML algorithms</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 {% endblock %}
