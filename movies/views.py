@@ -296,17 +296,47 @@ class MovieDetailView(DetailView):
         Add ratings and related data to context.
         
         Demonstrates: Collections (list, dict), for loops, if/else
+        OPTIMIZED: Heavy caching to avoid expensive queries and API calls
         """
+        from django.core.cache import cache
+        from django.db.models import Avg
+        
         context = super().get_context_data(**kwargs)
         movie = self.object
         
-        # Get ratings list
-        ratings = list(movie.ratings.select_related('user').order_by('-created_at')[:10])
-        context['ratings'] = ratings
+        # CRITICAL OPTIMIZATION: Cache entire context per movie for 5 minutes
+        cache_key = f'movie_detail_{movie.pk}_v2'
+        cached_context = cache.get(cache_key)
+        
+        if cached_context is not None:
+            # Return cached context, but update user-specific data
+            context.update(cached_context)
+            
+            # Update user-specific rating form
+            if self.request.user.is_authenticated:
+                existing_rating = Rating.objects.filter(
+                    user=self.request.user,
+                    movie=movie
+                ).first()
+                
+                if existing_rating:
+                    context['user_rating'] = existing_rating
+                    context['rating_form'] = RatingForm(instance=existing_rating)
+                else:
+                    context['rating_form'] = RatingForm()
+            
+            return context
+        
+        # If not cached, compute everything
+        # OPTIMIZATION: Fetch ratings once and reuse
+        all_ratings = list(movie.ratings.select_related('user').all())
+        
+        # Get recent ratings for display
+        context['ratings'] = all_ratings[:10]
         
         # Calculate rating distribution - dict
         rating_dist = {i: 0 for i in range(1, 6)}  # Dict comprehension
-        for rating in movie.ratings.all():
+        for rating in all_ratings:
             stars = int(rating.stars)  # Casting to int
             if stars in rating_dist:
                 rating_dist[stars] += 1
@@ -314,17 +344,61 @@ class MovieDetailView(DetailView):
         
         # Get all unique tags - set
         all_tags = set()  # set for uniqueness
-        for rating in movie.ratings.all():
+        for rating in all_ratings:
             tags = rating.get_tags_set()  # set of tags
             all_tags |= tags  # set union
         context['all_tags'] = sorted(all_tags)  # convert to sorted list
         
-        # Get similar movies using method
-        context['similar_movies'] = movie.get_similar_by_genre(limit=4)
+        # CRITICAL OPTIMIZATION: Disable similar movies - still too slow
+        # Even with 5k limit, iterating in Python is expensive
+        # TODO: Pre-compute and store in database, or use recommendation system
+        context['similar_movies'] = []
         
-        # Rating form for logged-in users
+        # OPTIMIZATION: Use annotation instead of property
+        avg_rating_result = Movie.objects.filter(pk=movie.pk).annotate(
+            avg_rating=Avg('ratings__stars')
+        ).first()
+        avg = avg_rating_result.avg_rating if avg_rating_result and avg_rating_result.avg_rating else 0.0
+        
+        # Build title with f-string and format modifier
+        context['page_title'] = f"{movie.title} ({movie.year}) - ★{avg:.1f} - CineSense"
+        
+        # CRITICAL OPTIMIZATION: Disable external API calls - they block page load!
+        # External APIs can take 3-10 seconds and block the entire page render
+        # TODO: Move to async background job if needed
+        external_data = {
+            'imdb': None,
+            'letterboxd': None,
+            'has_external_data': False
+        }
+        
+        # Uncomment below to re-enable (with caching):
+        # external_cache_key = f'movie_external_{movie.pk}'
+        # external_data = cache.get(external_cache_key)
+        # if external_data is None:
+        #     external_data = external_movie_service.get_movie_details(movie.title, movie.year)
+        #     cache.set(external_cache_key, external_data, 1800)
+        
+        context['imdb_data'] = external_data.get('imdb')
+        context['letterboxd_data'] = external_data.get('letterboxd')
+        context['has_external_data'] = external_data.get('has_external_data', False)
+        
+        # Cache the context (excluding user-specific data)
+        cacheable_context = {
+            'ratings': context['ratings'],
+            'rating_distribution': context['rating_distribution'],
+            'all_tags': context['all_tags'],
+            'similar_movies': context['similar_movies'],
+            'page_title': context['page_title'],
+            'imdb_data': context['imdb_data'],
+            'letterboxd_data': context['letterboxd_data'],
+            'has_external_data': context['has_external_data'],
+        }
+        # Cache for 5 minutes (300 seconds)
+        cache.set(cache_key, cacheable_context, 300)
+        
+        # Add user-specific data (not cached)
         if self.request.user.is_authenticated:
-            # Check if user already rated this movie
             existing_rating = Rating.objects.filter(
                 user=self.request.user,
                 movie=movie
@@ -335,16 +409,6 @@ class MovieDetailView(DetailView):
                 context['rating_form'] = RatingForm(instance=existing_rating)
             else:
                 context['rating_form'] = RatingForm()
-        
-        # Build title with f-string and format modifier
-        avg = movie.average_rating
-        context['page_title'] = f"{movie.title} ({movie.year}) - ★{avg:.1f} - CineSense"
-        
-        # Fetch external data from IMDB and Letterboxd
-        external_data = external_movie_service.get_movie_details(movie.title, movie.year)
-        context['imdb_data'] = external_data.get('imdb')
-        context['letterboxd_data'] = external_data.get('letterboxd')
-        context['has_external_data'] = external_data.get('has_external_data', False)
         
         return context
 

@@ -316,13 +316,14 @@ class Movie(TimestampedModel):
         
         Demonstrates: For loop, if/else, collections (set, dict),
                      lambda for sorting, Django ORM
+        OPTIMIZED: Limit to top 5000 popular movies instead of all 500k
         """
         my_genres = self.get_genres_set()
         if not my_genres:
             return Movie.objects.none()
         
-        # Get all other movies
-        candidates = Movie.objects.exclude(pk=self.pk)
+        # OPTIMIZATION: Only look at top 5000 popular movies instead of ALL movies
+        candidates = Movie.objects.exclude(pk=self.pk).only('pk', 'genres', 'popularity').order_by('-popularity')[:5000]
         
         # Calculate genre overlap scores using dict
         scores = {}  # dict: movie_id -> overlap_count
