@@ -56,7 +56,8 @@ def home(request):
     recent_movies = list(Movie.objects.order_by('-created_at')[:6])
     
     # Get popular genres with counts - dict comprehension
-    all_movies = Movie.objects.all()
+    # OPTIMIZATION: Limit to top 5000 popular movies to avoid scanning entire DB
+    all_movies = Movie.objects.order_by('-popularity')[:5000]
     genre_counts = {}  # dict: genre -> count
     
     for movie in all_movies:
@@ -114,10 +115,7 @@ class MovieListView(ListView):
         Demonstrates: If/else branching, string operations,
                      Django ORM filtering, collections (Q objects list)
         """
-        queryset = Movie.objects.annotate(
-            avg_rating=Avg('ratings__stars'),
-            num_ratings=Count('ratings')
-        )
+        queryset = Movie.objects.all()
         
         # Get form data
         form = MovieSearchForm(self.request.GET)
@@ -170,7 +168,11 @@ class MovieListView(ListView):
             
             # Sorting with if/else for different sort options
             if sort_by == 'avg_rating':
-                queryset = queryset.order_by('-avg_rating', '-rating_count')
+                # OPTIMIZATION: Only annotate if specifically sorting by rating
+                queryset = queryset.annotate(
+                    avg_rating=Avg('ratings__stars'),
+                    num_ratings=Count('ratings')
+                ).order_by('-avg_rating', '-rating_count')
             elif sort_by:
                 # Handle reverse sorting (prefix with -)
                 if sort_by.startswith('-'):
@@ -197,6 +199,33 @@ class MovieListView(ListView):
             context['page_title'] = f"Search: {query} - CineSense"
         else:
             context['page_title'] = "Browse Movies - CineSense"
+        
+        # OPTIMIZATION: Efficiently fetch ratings ONLY for current page
+        # This avoids the N+1 problem and expensive full-table annotation
+        movies_on_page = context['object_list']
+        if movies_on_page:
+            movie_ids = [m.pk for m in movies_on_page]
+            
+            # Fetch annotated movies for this page only
+            annotated_movies = Movie.objects.filter(pk__in=movie_ids).annotate(
+                avg_rating=Avg('ratings__stars'),
+                num_ratings=Count('ratings')
+            )
+            
+            # Create a dict for O(1) lookup: id -> movie
+            movie_map = {m.pk: m for m in annotated_movies}
+            
+            # Replace the movie objects in the context with annotated ones
+            # Preserving the original order is crucial
+            annotated_list = []
+            for original_movie in movies_on_page:
+                if original_movie.pk in movie_map:
+                    annotated_list.append(movie_map[original_movie.pk])
+                else:
+                    annotated_list.append(original_movie)
+            
+            context['movies'] = annotated_list
+            context['object_list'] = annotated_list
         
         return context
 
