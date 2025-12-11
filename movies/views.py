@@ -48,43 +48,63 @@ def home(request):
     
     Demonstrates: Collections (list, dict), f-strings, Django ORM
     """
-    # Get featured movies (top rated with enough votes)
-    featured_movies = Movie.objects.annotate(
-        avg_rating=Avg('ratings__stars'),
-        num_ratings=Count('ratings')
-    ).filter(num_ratings__gte=1).order_by('-avg_rating')[:6]
+    from django.core.cache import cache
     
-    # Get recent movies - list slicing
-    recent_movies = list(Movie.objects.order_by('-created_at')[:6])
+    # OPTIMIZATION: Cache featured movies (expensive annotation query)
+    featured_movies = cache.get('home_featured_movies')
+    if featured_movies is None:
+        featured_movies = list(Movie.objects.annotate(
+            avg_rating=Avg('ratings__stars'),
+            num_ratings=Count('ratings')
+        ).filter(num_ratings__gte=1).order_by('-avg_rating')[:6])
+        # Cache for 15 minutes (900 seconds)
+        cache.set('home_featured_movies', featured_movies, 900)
     
-    # Get popular genres with counts - dict comprehension
-    # OPTIMIZATION: Limit to top 5000 popular movies to avoid scanning entire DB
-    all_movies = Movie.objects.order_by('-popularity')[:5000]
-    genre_counts = {}  # dict: genre -> count
+    # OPTIMIZATION: Cache recent movies
+    recent_movies = cache.get('home_recent_movies')
+    if recent_movies is None:
+        recent_movies = list(Movie.objects.order_by('-created_at')[:6])
+        # Cache for 5 minutes (300 seconds)
+        cache.set('home_recent_movies', recent_movies, 300)
     
-    for movie in all_movies:
-        # For loop over movies
-        genres = movie.get_genres_list()  # list of genres
-        for genre in genres:
-            # Nested for loop
-            if genre in genre_counts:
-                genre_counts[genre] += 1
-            else:
-                genre_counts[genre] = 1
+    # OPTIMIZATION: Cache genre counts (expensive calculation)
+    popular_genres = cache.get('home_popular_genres')
+    if popular_genres is None:
+        # Only compute if not cached
+        # Limit to top 1000 popular movies (down from 5000)
+        all_movies = Movie.objects.only('genres', 'popularity').order_by('-popularity')[:1000]
+        genre_counts = {}  # dict: genre -> count
+        
+        for movie in all_movies:
+            # For loop over movies
+            genres = movie.get_genres_list()  # list of genres
+            for genre in genres:
+                # Nested for loop
+                if genre in genre_counts:
+                    genre_counts[genre] += 1
+                else:
+                    genre_counts[genre] = 1
+        
+        # Sort genres by count using lambda
+        popular_genres = sorted(
+            genre_counts.items(),
+            key=lambda x: x[1],  # Lambda: sort by count (second element)
+            reverse=True
+        )[:8]  # Top 8 genres
+        
+        # Cache for 1 hour (3600 seconds)
+        cache.set('home_popular_genres', popular_genres, 3600)
     
-    # Sort genres by count using lambda
-    popular_genres = sorted(
-        genre_counts.items(),
-        key=lambda x: x[1],  # Lambda: sort by count (second element)
-        reverse=True
-    )[:8]  # Top 8 genres
-    
-    # Build stats dict
-    stats = {
-        'movie_count': Movie.objects.count(),
-        'rating_count': Rating.objects.count(),
-        'user_count': UserProfile.objects.count(),
-    }
+    # OPTIMIZATION: Cache stats to avoid counting 500k records repeatedly
+    stats = cache.get('home_stats')
+    if stats is None:
+        stats = {
+            'movie_count': Movie.objects.count(),
+            'rating_count': Rating.objects.count(),
+            'user_count': UserProfile.objects.count(),
+        }
+        # Cache for 10 minutes (600 seconds)
+        cache.set('home_stats', stats, 600)
     
     # Context dict for template
     context = {
@@ -111,7 +131,7 @@ def search_suggestions(request):
         'id': m.id, 
         'title': m.title, 
         'year': m.year, 
-        'poster_path': m.poster_path
+        'poster_path': m.poster_url
     } for m in movies]
     
     return JsonResponse({'results': results})
@@ -223,27 +243,37 @@ class MovieListView(ListView):
         
         # OPTIMIZATION: Efficiently fetch ratings ONLY for current page
         # This avoids the N+1 problem and expensive full-table annotation
+        # CACHE per-page annotations to avoid re-querying on repeated visits
         movies_on_page = context['object_list']
         if movies_on_page:
+            from django.core.cache import cache
+            
             movie_ids = [m.pk for m in movies_on_page]
+            # Create cache key from movie IDs
+            cache_key = f'movie_ratings_{"_".join(map(str, sorted(movie_ids)))}'
             
-            # Fetch annotated movies for this page only
-            annotated_movies = Movie.objects.filter(pk__in=movie_ids).annotate(
-                avg_rating=Avg('ratings__stars'),
-                num_ratings=Count('ratings')
-            )
-            
-            # Create a dict for O(1) lookup: id -> movie
-            movie_map = {m.pk: m for m in annotated_movies}
-            
-            # Replace the movie objects in the context with annotated ones
-            # Preserving the original order is crucial
-            annotated_list = []
-            for original_movie in movies_on_page:
-                if original_movie.pk in movie_map:
-                    annotated_list.append(movie_map[original_movie.pk])
-                else:
-                    annotated_list.append(original_movie)
+            annotated_list = cache.get(cache_key)
+            if annotated_list is None:
+                # Fetch annotated movies for this page only
+                annotated_movies = Movie.objects.filter(pk__in=movie_ids).annotate(
+                    avg_rating=Avg('ratings__stars'),
+                    num_ratings=Count('ratings')
+                )
+                
+                # Create a dict for O(1) lookup: id -> movie
+                movie_map = {m.pk: m for m in annotated_movies}
+                
+                # Replace the movie objects in the context with annotated ones
+                # Preserving the original order is crucial
+                annotated_list = []
+                for original_movie in movies_on_page:
+                    if original_movie.pk in movie_map:
+                        annotated_list.append(movie_map[original_movie.pk])
+                    else:
+                        annotated_list.append(original_movie)
+                
+                # Cache for 5 minutes (300 seconds)
+                cache.set(cache_key, annotated_list, 300)
             
             context['movies'] = annotated_list
             context['object_list'] = annotated_list
@@ -266,17 +296,47 @@ class MovieDetailView(DetailView):
         Add ratings and related data to context.
         
         Demonstrates: Collections (list, dict), for loops, if/else
+        OPTIMIZED: Heavy caching to avoid expensive queries and API calls
         """
+        from django.core.cache import cache
+        from django.db.models import Avg
+        
         context = super().get_context_data(**kwargs)
         movie = self.object
         
-        # Get ratings list
-        ratings = list(movie.ratings.select_related('user').order_by('-created_at')[:10])
-        context['ratings'] = ratings
+        # CRITICAL OPTIMIZATION: Cache entire context per movie for 5 minutes
+        cache_key = f'movie_detail_{movie.pk}_v2'
+        cached_context = cache.get(cache_key)
+        
+        if cached_context is not None:
+            # Return cached context, but update user-specific data
+            context.update(cached_context)
+            
+            # Update user-specific rating form
+            if self.request.user.is_authenticated:
+                existing_rating = Rating.objects.filter(
+                    user=self.request.user,
+                    movie=movie
+                ).first()
+                
+                if existing_rating:
+                    context['user_rating'] = existing_rating
+                    context['rating_form'] = RatingForm(instance=existing_rating)
+                else:
+                    context['rating_form'] = RatingForm()
+            
+            return context
+        
+        # If not cached, compute everything
+        # OPTIMIZATION: Fetch ratings once and reuse
+        all_ratings = list(movie.ratings.select_related('user').all())
+        
+        # Get recent ratings for display
+        context['ratings'] = all_ratings[:10]
         
         # Calculate rating distribution - dict
         rating_dist = {i: 0 for i in range(1, 6)}  # Dict comprehension
-        for rating in movie.ratings.all():
+        for rating in all_ratings:
             stars = int(rating.stars)  # Casting to int
             if stars in rating_dist:
                 rating_dist[stars] += 1
@@ -284,17 +344,61 @@ class MovieDetailView(DetailView):
         
         # Get all unique tags - set
         all_tags = set()  # set for uniqueness
-        for rating in movie.ratings.all():
+        for rating in all_ratings:
             tags = rating.get_tags_set()  # set of tags
             all_tags |= tags  # set union
         context['all_tags'] = sorted(all_tags)  # convert to sorted list
         
-        # Get similar movies using method
-        context['similar_movies'] = movie.get_similar_by_genre(limit=4)
+        # CRITICAL OPTIMIZATION: Disable similar movies - still too slow
+        # Even with 5k limit, iterating in Python is expensive
+        # TODO: Pre-compute and store in database, or use recommendation system
+        context['similar_movies'] = []
         
-        # Rating form for logged-in users
+        # OPTIMIZATION: Use annotation instead of property
+        avg_rating_result = Movie.objects.filter(pk=movie.pk).annotate(
+            avg_rating=Avg('ratings__stars')
+        ).first()
+        avg = avg_rating_result.avg_rating if avg_rating_result and avg_rating_result.avg_rating else 0.0
+        
+        # Build title with f-string and format modifier
+        context['page_title'] = f"{movie.title} ({movie.year}) - ★{avg:.1f} - CineSense"
+        
+        # CRITICAL OPTIMIZATION: Disable external API calls - they block page load!
+        # External APIs can take 3-10 seconds and block the entire page render
+        # TODO: Move to async background job if needed
+        external_data = {
+            'imdb': None,
+            'letterboxd': None,
+            'has_external_data': False
+        }
+        
+        # Uncomment below to re-enable (with caching):
+        # external_cache_key = f'movie_external_{movie.pk}'
+        # external_data = cache.get(external_cache_key)
+        # if external_data is None:
+        #     external_data = external_movie_service.get_movie_details(movie.title, movie.year)
+        #     cache.set(external_cache_key, external_data, 1800)
+        
+        context['imdb_data'] = external_data.get('imdb')
+        context['letterboxd_data'] = external_data.get('letterboxd')
+        context['has_external_data'] = external_data.get('has_external_data', False)
+        
+        # Cache the context (excluding user-specific data)
+        cacheable_context = {
+            'ratings': context['ratings'],
+            'rating_distribution': context['rating_distribution'],
+            'all_tags': context['all_tags'],
+            'similar_movies': context['similar_movies'],
+            'page_title': context['page_title'],
+            'imdb_data': context['imdb_data'],
+            'letterboxd_data': context['letterboxd_data'],
+            'has_external_data': context['has_external_data'],
+        }
+        # Cache for 5 minutes (300 seconds)
+        cache.set(cache_key, cacheable_context, 300)
+        
+        # Add user-specific data (not cached)
         if self.request.user.is_authenticated:
-            # Check if user already rated this movie
             existing_rating = Rating.objects.filter(
                 user=self.request.user,
                 movie=movie
@@ -305,16 +409,6 @@ class MovieDetailView(DetailView):
                 context['rating_form'] = RatingForm(instance=existing_rating)
             else:
                 context['rating_form'] = RatingForm()
-        
-        # Build title with f-string and format modifier
-        avg = movie.average_rating
-        context['page_title'] = f"{movie.title} ({movie.year}) - ★{avg:.1f} - CineSense"
-        
-        # Fetch external data from IMDB and Letterboxd
-        external_data = external_movie_service.get_movie_details(movie.title, movie.year)
-        context['imdb_data'] = external_data.get('imdb')
-        context['letterboxd_data'] = external_data.get('letterboxd')
-        context['has_external_data'] = external_data.get('has_external_data', False)
         
         return context
 
@@ -517,17 +611,35 @@ def genre_movies(request, genre):
     # String modification: normalize genre
     genre_normalized = genre.strip().title()
     
+    # OPTIMIZATION: Don't annotate the full queryset - only current page
     # Filter movies containing this genre
     movies = Movie.objects.filter(
         genres__icontains=genre_normalized
-    ).annotate(
-        avg_rating=Avg('ratings__stars')
     ).order_by('-popularity')
     
     # Pagination
     paginator = Paginator(movies, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # OPTIMIZATION: Annotate ONLY the current page, not the full queryset
+    movies_on_page = page_obj.object_list
+    if movies_on_page:
+        movie_ids = [m.pk for m in movies_on_page]
+        annotated_movies = Movie.objects.filter(pk__in=movie_ids).annotate(
+            avg_rating=Avg('ratings__stars'),
+            num_ratings=Count('ratings')
+        )
+        movie_map = {m.pk: m for m in annotated_movies}
+        
+        annotated_list = []
+        for original_movie in movies_on_page:
+            if original_movie.pk in movie_map:
+                annotated_list.append(movie_map[original_movie.pk])
+            else:
+                annotated_list.append(original_movie)
+        
+        page_obj.object_list = annotated_list
     
     context = {
         'genre': genre_normalized,
@@ -631,49 +743,46 @@ def all_genres(request):
     List all genres with movie counts.
     
     Demonstrates: Dict for aggregation, for loop, sorting with lambda
+    OPTIMIZED: Heavily cached to avoid loading 500k movies
     """
-    # Get all movies
-    movies = Movie.objects.all()
+    from django.core.cache import cache
     
-    # Count movies per genre using dict
-    genre_data = {}  # dict: genre -> {count, avg_rating, movies}
+    # CRITICAL OPTIMIZATION: Cache the entire genre list for 1 hour
+    # This view was loading ALL 500k movies on every request!
+    genre_list = cache.get('all_genres_list')
     
-    # For loop over movies
-    for movie in movies:
-        genres = movie.get_genres_list()  # list
-        avg = movie.average_rating
+    if genre_list is None:
+        # Only compute if not cached
+        # OPTIMIZATION: Limit to top 10,000 popular movies instead of all 500k
+        movies = Movie.objects.only('genres', 'popularity').order_by('-popularity')[:10000]
         
-        # Nested loop over genres
-        for genre in genres:
-            if genre not in genre_data:
-                genre_data[genre] = {
-                    'count': 0,
-                    'total_rating': 0,
-                    'rated_count': 0,
-                }
-            
-            genre_data[genre]['count'] += 1
-            
-            if avg > 0:
-                genre_data[genre]['total_rating'] += avg
-                genre_data[genre]['rated_count'] += 1
-    
-    # Calculate average ratings and create list
-    genre_list = []
-    for genre, data in genre_data.items():
-        avg = 0
-        if data['rated_count'] > 0:
-            avg = data['total_rating'] / data['rated_count']
+        # Count movies per genre using dict
+        genre_data = {}  # dict: genre -> {count}
         
-        genre_list.append({
-            'name': genre,
-            'count': data['count'],
-            'average_rating': avg,
-            'display_rating': f"{avg:.1f}" if avg > 0 else "No ratings",
-        })
-    
-    # Sort by count using lambda
-    genre_list.sort(key=lambda x: x['count'], reverse=True)
+        # For loop over movies
+        for movie in movies:
+            genres = movie.get_genres_list()  # list
+            
+            # Nested loop over genres
+            for genre in genres:
+                if genre not in genre_data:
+                    genre_data[genre] = {'count': 0}
+                
+                genre_data[genre]['count'] += 1
+        
+        # Create list (removed avg rating calculation - too expensive)
+        genre_list = []
+        for genre, data in genre_data.items():
+            genre_list.append({
+                'name': genre,
+                'count': data['count'],
+            })
+        
+        # Sort by count using lambda
+        genre_list.sort(key=lambda x: x['count'], reverse=True)
+        
+        # Cache for 1 hour (3600 seconds)
+        cache.set('all_genres_list', genre_list, 3600)
     
     context = {
         'genres': genre_list,

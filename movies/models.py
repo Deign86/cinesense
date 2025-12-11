@@ -161,6 +161,8 @@ class Movie(TimestampedModel):
             models.Index(fields=['tmdb_id']),
             models.Index(fields=['imdb_id']),
             models.Index(fields=['imdb_rating']),
+            models.Index(fields=['popularity']),  # For sorting by popularity
+            models.Index(fields=['genres']),  # For genre filtering
         ]
     
     def __str__(self) -> str:
@@ -243,6 +245,22 @@ class Movie(TimestampedModel):
             return f"https://www.imdb.com/title/{self.imdb_id}/"
         return ""
 
+    @property
+    def poster_url(self) -> str:
+        """
+        Get the full poster URL.
+        Handles TMDB relative paths by prepending the image server URL.
+        """
+        if not self.poster_path:
+            return ""
+        
+        # If it's a relative path (starts with /), prepend TMDB image URL
+        if self.poster_path.startswith('/'):
+            return f"https://image.tmdb.org/t/p/w500{self.poster_path}"
+        
+        # Otherwise return as-is (already a full URL)
+        return self.poster_path
+
 
     
     @property
@@ -298,13 +316,14 @@ class Movie(TimestampedModel):
         
         Demonstrates: For loop, if/else, collections (set, dict),
                      lambda for sorting, Django ORM
+        OPTIMIZED: Limit to top 5000 popular movies instead of all 500k
         """
         my_genres = self.get_genres_set()
         if not my_genres:
             return Movie.objects.none()
         
-        # Get all other movies
-        candidates = Movie.objects.exclude(pk=self.pk)
+        # OPTIMIZATION: Only look at top 5000 popular movies instead of ALL movies
+        candidates = Movie.objects.exclude(pk=self.pk).only('pk', 'genres', 'popularity').order_by('-popularity')[:5000]
         
         # Calculate genre overlap scores using dict
         scores = {}  # dict: movie_id -> overlap_count
