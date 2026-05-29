@@ -48,6 +48,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'movies.middleware.AutoSeedMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -77,11 +79,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'cinesense_project.wsgi.application'
 
 # Database - SQLite default for easy setup
-# Demonstrates: Database configuration (Django ORM)
+# On Vercel, use /tmp for writable SQLite storage (read-only filesystem elsewhere)
+import tempfile
+_db_path = BASE_DIR / 'db.sqlite3'
+if not os.path.exists(str(_db_path)) or not os.access(str(_db_path), os.W_OK):
+    # Vercel or other read-only FS: use /tmp
+    _db_path = Path(tempfile.gettempdir()) / 'db.sqlite3'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': _db_path,
     }
 }
 
@@ -110,6 +118,18 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise - serve static files in production
+# Use StaticFilesStorage on Vercel (no collectstatic manifest needed)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 # Media files (uploaded content, generated charts)
 MEDIA_URL = 'media/'

@@ -1,7 +1,16 @@
 {
   "version": 2,
+  "build": {
+    "command": "python manage.py migrate --noinput && python manage.py seed_movies"
+  },
   "builds": [
-    { "src": "cinesense_project/wsgi.py", "use": "@vercel/python" }
+    {
+      "src": "cinesense_project/wsgi.py",
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": ["staticfiles/**", "db.sqlite3"]
+      }
+    }
   ],
   "routes": [
     { "src": "/(.*)", "dest": "/cinesense_project/wsgi.py" }

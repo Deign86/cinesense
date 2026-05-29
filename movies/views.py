@@ -494,33 +494,38 @@ class AnalyticsView(View):
         watch_patterns = analytics.get_watch_patterns()
         
         # Generate charts
-        chart_gen = ChartGenerator(output_dir=settings.MEDIA_ROOT / 'charts')
-        
         charts = {}  # dict of chart paths
         
-        # Genre distribution chart
-        if genre_stats:
-            charts['genre_bar'] = chart_gen.create_genre_bar_chart(genre_stats)
-            charts['genre_pie'] = chart_gen.create_genre_pie_chart(genre_stats)
-        
-        # Rating distribution histogram
-        if is_authenticated:
-            user_ratings = list(
-                Rating.objects.filter(user=request.user).values_list('stars', flat=True)
-            )
-        else:
-            user_ratings = list(
-                Rating.objects.all().values_list('stars', flat=True)
-            )
-        
-        if user_ratings:
-            charts['rating_hist'] = chart_gen.create_rating_histogram(user_ratings)
-        
-        # Ratings over time line chart
-        if rating_stats.get('ratings_over_time'):
-            charts['ratings_line'] = chart_gen.create_ratings_timeline(
-                rating_stats['ratings_over_time']
-            )
+        try:
+            chart_gen = ChartGenerator(output_dir=settings.MEDIA_ROOT / 'charts')
+            
+            # Genre distribution chart
+            if genre_stats:
+                charts['genre_bar'] = chart_gen.create_genre_bar_chart(genre_stats)
+                charts['genre_pie'] = chart_gen.create_genre_pie_chart(genre_stats)
+            
+            # Rating distribution histogram
+            if is_authenticated:
+                user_ratings = list(
+                    Rating.objects.filter(user=request.user).values_list('stars', flat=True)
+                )
+            else:
+                user_ratings = list(
+                    Rating.objects.all().values_list('stars', flat=True)
+                )
+            
+            if user_ratings:
+                charts['rating_hist'] = chart_gen.create_rating_histogram(user_ratings)
+            
+            # Ratings over time line chart
+            if rating_stats.get('ratings_over_time'):
+                charts['ratings_line'] = chart_gen.create_ratings_timeline(
+                    rating_stats['ratings_over_time']
+                )
+        except Exception as e:
+            # Chart generation may fail on read-only filesystems (Vercel)
+            logger.warning(f"Chart generation failed: {e}")
+            charts = {}
         
         if is_authenticated:
             page_title = f"Your Analytics - {request.user.username} - CineSense"

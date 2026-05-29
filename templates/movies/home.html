@@ -8,31 +8,27 @@
 <section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-7">
+            <div class="col-lg-6">
                 <h1 class="hero-title">
-                    <span>The CineSense</span>
-                    <span>Movie</span>
-                    <span>Recommendation</span>
-                    <span>System</span>
+                    Discover<br>
+                    Movies That<br>
+                    Match You.
                 </h1>
-                <p class="hero-description mb-4">
-                    Discover movies tailored to your taste using machine learning recommendations. 
-                    We offer personalized suggestions, detailed analytics, and smart insights 
-                    to elevate your movie-watching experience.
+                <p class="hero-description mb-4 lead">
+                    CineSense uses machine learning to learn your taste and recommend films you'll actually enjoy. Rate movies, track your viewing history, and get smart suggestions.
                 </p>
                 <div class="d-flex gap-3">
                     <a href="{% url 'movie_list' %}" class="btn btn-services">
                         Browse Movies
-                        <span class="btn-icon"><i class="bi bi-arrow-right"></i></span>
                     </a>
                     {% if user.is_authenticated %}
                     <a href="{% url 'recommendations' %}" class="btn btn-success btn-lg">
-                        <i class="bi bi-magic me-2"></i>Get Recommendations
+                        Recommendations <i class="bi bi-arrow-right ms-2"></i>
                     </a>
                     {% endif %}
                 </div>
             </div>
-            <div class="col-lg-5 d-none d-lg-block">
+            <div class="col-lg-5 offset-lg-1 d-none d-lg-block">
                 <div class="hero-3d-element"></div>
             </div>
         </div>
@@ -42,34 +38,36 @@
 
 {% block content %}
 
-<!-- About Section -->
-<section class="about-section">
-    <div class="row">
-        <div class="col-lg-6">
-            <h2 class="section-title">ABOUT</h2>
+<!-- About & Stats Section -->
+<section class="about-section mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-5">
+            <h2 class="section-title mb-4">How it works</h2>
             <p class="about-description">
-                CineSense is a cutting-edge movie recommendation system dedicated to transforming 
-                your entertainment choices. With a focus on personalization and machine learning, 
-                we analyze your preferences to suggest movies that match your taste.
-            </p>
-            <p class="about-description">
-                Whether you're looking for hidden gems or blockbuster hits, we're here to 
-                enhance your movie discovery experience.
+                We analyze your viewing history and ratings to build a personalized taste profile. 
+                Using collaborative filtering and content-based algorithms, CineSense predicts which 
+                films you're most likely to enjoy next.
             </p>
         </div>
-        <div class="col-lg-6">
-            <div class="stats-grid justify-content-end">
-                <div class="stat-item">
-                    <div class="stat-number">{{ stats.movie_count|default:"0" }}+</div>
-                    <div class="stat-label">movies</div>
+        <div class="col-lg-6 offset-lg-1">
+            <div class="row g-4">
+                <div class="col-sm-4">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-number h2 mb-2">{{ stats.movie_count|default:"0" }}+</div>
+                        <div class="stat-label text-muted small text-uppercase tracking-wider">Movies</div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number">{{ stats.rating_count|default:"0" }}</div>
-                    <div class="stat-label">ratings</div>
+                <div class="col-sm-4">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-number h2 mb-2">{{ stats.rating_count|default:"0" }}</div>
+                        <div class="stat-label text-muted small text-uppercase tracking-wider">Ratings</div>
+                    </div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number">{{ stats.user_count|default:"0" }}</div>
-                    <div class="stat-label">users</div>
+                <div class="col-sm-4">
+                    <div class="stat-card text-center p-4">
+                        <div class="stat-number h2 mb-2">{{ stats.user_count|default:"0" }}</div>
+                        <div class="stat-label text-muted small text-uppercase tracking-wider">Users</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,10 +79,10 @@
     <div class="services-header">
         <div class="row align-items-end">
             <div class="col-lg-6">
-                <h2 class="section-title">OUR SERVICES</h2>
+                <h2 class="section-title">What you can do</h2>
                 <p class="services-description">
-                    Explore our array of services, from smart recommendations to detailed analytics, 
-                    designed to elevate your movie experience and drive discovery.
+                    From smart recommendations to detailed analytics, 
+                    everything you need to discover your next favorite film.
                 </p>
             </div>
             <div class="col-lg-6 text-lg-end">
@@ -99,40 +97,37 @@
     <div class="row g-4">
         <div class="col-md-6 col-lg-3">
             <div class="service-card">
-                <div class="service-number">
+                <div class="service-icon">
                     <i class="bi bi-collection-play"></i>
-                    01
                 </div>
                 <h4 class="service-title">Movie Database</h4>
                 <p class="service-description">
-                    Browse our extensive collection of movies, search by title, genre, or year, 
+                    Browse our collection, search by title, genre, or year, 
                     and discover your next favorite film.
                 </p>
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
             <div class="service-card">
-                <div class="service-number">
+                <div class="service-icon">
                     <i class="bi bi-graph-up-arrow"></i>
-                    02
                 </div>
                 <h4 class="service-title">Smart Analytics</h4>
                 <p class="service-description">
-                    View detailed statistics about your watching habits with NumPy and SciPy 
+                    View detailed statistics about your watching habits with 
                     powered charts and insights.
                 </p>
             </div>
         </div>
         <div class="col-md-6 col-lg-3">
             <div class="service-card">
-                <div class="service-number">
+                <div class="service-icon">
                     <i class="bi bi-robot"></i>
-                    03
                 </div>
                 <h4 class="service-title">ML Recommendations</h4>
                 <p class="service-description">
-                    Get personalized movie suggestions powered by scikit-learn 
-                    linear regression algorithms.
+                    Get personalized movie suggestions powered by 
+                    machine learning algorithms.
                 </p>
             </div>
         </div>
@@ -140,7 +135,8 @@
             <div class="service-card">
                 <div class="service-number">
                     <i class="bi bi-star"></i>
-                    04
+                    <div class="service-icon">
+                    <i class="bi bi-star"></i>
                 </div>
                 <h4 class="service-title">Rate & Review</h4>
                 <p class="service-description">
@@ -235,56 +231,5 @@
 </section>
 {% endif %}
 
-<!-- Special Offer Section -->
-<section class="section mb-5">
-    <div class="special-offer-card">
-        <div class="special-offer-glow"></div>
-        <div class="row align-items-center">
-            <div class="col-lg-8">
-                <div class="special-offer-badge">
-                    <i class="bi bi-stars me-2"></i>LIMITED TIME
-                </div>
-                <h2 class="special-offer-title">
-                    SPECIAL OFFER<br>
-                    <span class="highlight">FOR NEW USERS</span>
-                </h2>
-                <p class="special-offer-description">
-                    Sign up today and start rating movies to unlock personalized recommendations 
-                    powered by machine learning. Let us help you discover your next favorite film.
-                </p>
-                <div class="special-offer-features">
-                    <div class="feature-item">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span>Unlimited Movie Access</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span>AI-Powered Recommendations</span>
-                    </div>
-                    <div class="feature-item">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span>Personalized Analytics</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4 text-center">
-                <div class="special-offer-cta">
-                    {% if not user.is_authenticated %}
-                    <a href="{% url 'admin:login' %}" class="btn btn-offer">
-                        Get Started Now
-                        <span class="btn-icon"><i class="bi bi-arrow-right"></i></span>
-                    </a>
-                    <p class="cta-note">No credit card required</p>
-                    {% else %}
-                    <a href="{% url 'recommendations' %}" class="btn btn-offer">
-                        View Recommendations
-                        <span class="btn-icon"><i class="bi bi-magic"></i></span>
-                    </a>
-                    <p class="cta-note">Powered by ML algorithms</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+<!-- Special Offer Section removed -->
 {% endblock %}

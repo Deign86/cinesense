@@ -40,6 +40,9 @@ tqdm>=4.66.0
 # Optional: For production deployment
 gunicorn>=21.0.0
 
+# WhiteNoise for serving static files on Vercel
+whitenoise>=6.5.0
+
 # Optional: For better SQLite support
 # For production, consider:
 # psycopg2-binary>=2.9.0  # PostgreSQL

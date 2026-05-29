@@ -143,3 +143,4 @@ static/charts/*.png
 # Secret key files
 *.key
 *.pem
+.vercel
