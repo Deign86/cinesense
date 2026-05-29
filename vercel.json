@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "manage.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/manage.py" }
+  ],
+  "env": {
+    "ALLOWED_HOSTS": "cinesense-seven.vercel.app,.vercel.app,localhost,127.0.0.1",
+    "DEBUG": "False"
+  }
+}

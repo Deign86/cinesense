@@ -605,3 +605,20 @@ Contributions are welcome! Please follow these steps:
   Made with ❤️ and 🎬<br>
   <strong>CineSense</strong> - A Python learning project demonstrating comprehensive programming concepts
 </p>
+
+---
+
+## 🛰️ Vercel Deployment (Environment Variables)
+
+To fix the "DisallowedHost" error on Vercel, configure `ALLOWED_HOSTS` and `DEBUG` as environment variables. You can either add them in the Vercel Dashboard (recommended) or provide a `vercel.json` in the repository (dashboard is preferred for secrets).
+
+- Recommended Environment Variables (Vercel Dashboard → Project → Settings → Environment Variables):
+   - **Key:** `ALLOWED_HOSTS` — **Value:** `cinesense-seven.vercel.app,.vercel.app,localhost,127.0.0.1`
+   - **Key:** `DEBUG` — **Value:** `False` (set `True` only for development)
+   - **Key:** `OMDB_API_KEY` — **Value:** `your_api_key_here` (keep this secret)
+
+- After adding the environment variables in the Dashboard, redeploy the project; the DisallowedHost error should be resolved.
+
+If you'd like, I can:
+- Add a `.env` file for local testing from `.env.example` (I created `.env.example` in the repo).
+- Walk you step-by-step through adding variables in the Vercel Dashboard.

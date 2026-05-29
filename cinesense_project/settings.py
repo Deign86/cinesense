@@ -21,9 +21,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = f"django-insecure-cinesense-{''.join(['x' for _ in range(40)])}"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Read DEBUG from environment so production (Vercel) can disable it.
+# Use 'True' or 'False' (strings) in environment variables.
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+# Configure ALLOWED_HOSTS via environment variable for safety and flexibility.
+# Example env value: "cinesense-seven.vercel.app,.vercel.app,localhost,127.0.0.1"
+_allowed_hosts_env = os.environ.get('ALLOWED_HOSTS')
+if _allowed_hosts_env:
+    # Split on commas and strip whitespace; ignore empty parts
+    ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(',') if h.strip()]
+else:
+    # Sensible defaults for local development and the known Vercel host pattern
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'cinesense-seven.vercel.app', '.vercel.app']
 
 # Application definition - Demonstrates: collections (list)
 INSTALLED_APPS = [
