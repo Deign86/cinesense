@@ -1,10 +1,10 @@
 {
   "version": 2,
   "builds": [
-    { "src": "manage.py", "use": "@vercel/python" }
+    { "src": "cinesense_project/wsgi.py", "use": "@vercel/python" }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "/manage.py" }
+    { "src": "/(.*)", "dest": "/cinesense_project/wsgi.py" }
   ],
   "env": {
     "ALLOWED_HOSTS": "cinesense-seven.vercel.app,.vercel.app,localhost,127.0.0.1",
